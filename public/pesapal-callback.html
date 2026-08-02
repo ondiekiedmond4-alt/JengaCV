@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Payment status — JengaCV</title>
+<style>
+  body{font-family:'Inter',system-ui,sans-serif;background:#faf8f4;color:#1c2333;
+    display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;padding:20px;}
+  .box{background:#fff;border-radius:14px;padding:32px;max-width:380px;text-align:center;
+    box-shadow:0 10px 30px rgba(28,35,51,.14);}
+  .spinner{width:28px;height:28px;border:3px solid #e2ddd0;border-top-color:#1f6f5c;
+    border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 16px;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .check{width:48px;height:48px;border-radius:50%;background:#1f6f5c;color:#fff;
+    display:flex;align-items:center;justify-content:center;font-size:24px;margin:0 auto 14px;}
+  .fail{background:#a4383a;}
+  h2{margin:0 0 6px;font-size:18px;}
+  p{color:#6b6f7a;font-size:13.5px;line-height:1.5;margin:0;}
+</style>
+</head>
+<body>
+  <div class="box" id="box">
+    <div class="spinner"></div>
+    <h2>Confirming your payment…</h2>
+    <p>This only takes a moment. You can safely close this tab once confirmed —
+       your downloads unlock automatically in the JengaCV tab.</p>
+  </div>
+
+<script>
+  const params = new URLSearchParams(window.location.search);
+  const orderTrackingId = params.get('OrderTrackingId') || params.get('orderTrackingId');
+  const box = document.getElementById('box');
+
+  async function confirm(){
+    if(!orderTrackingId){
+      box.innerHTML = `<h2>Missing payment reference</h2><p>Please return to the JengaCV tab and try again.</p>`;
+      return;
+    }
+    try{
+      const res = await fetch(`/api/pesapal/confirm/${orderTrackingId}`);
+      const data = await res.json();
+      if(data.status === 'success'){
+        box.innerHTML = `<div class="check">✓</div><h2>Payment confirmed</h2><p>You can close this tab and return to JengaCV — your downloads are unlocked.</p>`;
+      } else if(data.status === 'failed'){
+        box.innerHTML = `<div class="check fail">✕</div><h2>Payment not completed</h2><p>You can close this tab and try again from JengaCV.</p>`;
+      } else {
+        box.innerHTML = `<h2>Still processing…</h2><p>Return to the JengaCV tab — it will pick up confirmation automatically once it lands.</p>`;
+      }
+    } catch(err){
+      box.innerHTML = `<h2>Could not confirm</h2><p>Return to the JengaCV tab — it will keep checking automatically.</p>`;
+    }
+  }
+  confirm();
+</script>
+</body>
+</html>

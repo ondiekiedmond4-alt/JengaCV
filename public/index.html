@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JengaCV — Build your CV</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1c2333;
+    --paper:#faf8f4;
+    --paper-alt:#f1ede4;
+    --card:#ffffff;
+    --line:#e2ddd0;
+    --green:#1f6f5c;
+    --green-dark:#164f42;
+    --gold:#c89b3c;
+    --danger:#a4383a;
+    --muted:#6b6f7a;
+    --accent:#1f6f5c;
+    --radius:10px;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:'Inter',sans-serif;background:var(--paper);color:var(--ink);}
+  h1,h2,h3{font-family:'Fraunces',serif;margin:0;}
+  .eyebrow{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);}
+
+  /* ---------- App shell ---------- */
+  .topbar{display:flex;align-items:center;justify-content:space-between;padding:16px 28px;background:var(--ink);color:var(--paper);}
+  .brand{display:flex;align-items:baseline;gap:10px;}
+  .brand h1{font-size:20px;color:#fff;letter-spacing:.01em;}
+  .brand .tag{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--gold);letter-spacing:.08em;}
+  .credits-pill{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);padding:7px 14px;border-radius:999px;font-size:13px;}
+  .credits-pill .dot{width:7px;height:7px;border-radius:50%;background:var(--gold);}
+
+  .layout{display:grid;grid-template-columns:minmax(340px,440px) 1fr;gap:0;min-height:calc(100vh - 60px);}
+  @media (max-width:900px){.layout{grid-template-columns:1fr;}}
+
+  /* ---------- Form column ---------- */
+  .form-col{padding:28px;border-right:1px solid var(--line);}
+  .stepper{display:flex;gap:8px;margin-bottom:22px;}
+  .step-pip{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;}
+  .step-pip .bar{width:100%;height:4px;border-radius:2px;background:var(--line);}
+  .step-pip.active .bar{background:var(--accent);}
+  .step-pip.done .bar{background:var(--gold);}
+  .step-pip .icon-wrap{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--paper-alt);color:var(--muted);border:1.5px solid var(--line);}
+  .step-pip.active .icon-wrap{background:var(--accent);color:#fff;border-color:var(--accent);}
+  .step-pip.done .icon-wrap{background:var(--gold);color:#fff;border-color:var(--gold);}
+  .step-pip svg{width:14px;height:14px;}
+
+  .step-label{margin-bottom:18px;display:flex;align-items:center;gap:12px;}
+  .step-label .icon-badge{width:38px;height:38px;border-radius:9px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .step-label .icon-badge svg{width:20px;height:20px;}
+  .step-label .eyebrow{margin-bottom:4px;}
+  .step-label h2{font-size:22px;}
+
+  /* photo upload */
+  .photo-row{display:flex;align-items:center;gap:14px;margin-bottom:18px;}
+  .photo-preview{width:64px;height:64px;border-radius:50%;background:var(--paper-alt);border:1.5px dashed var(--line);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;color:var(--muted);}
+  .photo-preview img{width:100%;height:100%;object-fit:cover;}
+  .photo-preview svg{width:22px;height:22px;}
+  .photo-actions{display:flex;flex-direction:column;gap:6px;}
+  .photo-actions label.upload-btn{display:inline-flex;align-items:center;gap:6px;background:var(--ink);color:#fff;padding:8px 14px;border-radius:7px;font-size:12.5px;font-weight:600;cursor:pointer;width:fit-content;}
+  .photo-actions .remove-photo{background:none;border:none;color:var(--danger);font-size:12px;font-weight:600;cursor:pointer;text-align:left;padding:0;}
+  .photo-actions input[type=file]{display:none;}
+
+  /* contact icons */
+  .r-contact-icon{display:inline-flex;align-items:center;gap:4px;}
+  .r-contact-icon svg{width:11px;height:11px;flex-shrink:0;}
+  .r-avatar{width:74px;height:74px;border-radius:50%;object-fit:cover;flex-shrink:0;}
+  .r-header-flex{display:flex;align-items:center;gap:18px;}
+  .tpl-minimal .r-header-flex{flex-direction:column;text-align:center;}
+
+  .field{margin-bottom:16px;}
+  .field label{display:block;font-size:12.5px;font-weight:600;margin-bottom:6px;color:var(--ink);}
+  .field .hint{font-weight:400;color:var(--muted);font-size:11.5px;margin-left:6px;}
+  input[type=text],input[type=email],input[type=tel],textarea,select{
+    width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:8px;
+    font-family:'Inter',sans-serif;font-size:14px;background:#fff;color:var(--ink);
+  }
+  textarea{resize:vertical;min-height:70px;}
+  input:focus,textarea:focus,select:focus{outline:none;border-color:var(--accent);}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+
+  .entry-card{background:var(--paper-alt);border:1px solid var(--line);border-radius:var(--radius);padding:16px;margin-bottom:14px;position:relative;}
+  .entry-card .remove-btn{position:absolute;top:10px;right:10px;background:none;border:none;color:var(--danger);font-size:12px;font-weight:600;cursor:pointer;font-family:'IBM Plex Mono',monospace;}
+  .add-btn{display:inline-flex;align-items:center;gap:6px;background:none;border:1.5px dashed var(--muted);color:var(--ink);border-radius:8px;padding:9px 14px;font-size:13px;font-weight:600;cursor:pointer;width:100%;justify-content:center;}
+  .add-btn:hover{border-color:var(--accent);color:var(--accent);}
+
+  .nav-row{display:flex;justify-content:space-between;margin-top:24px;}
+  .btn{border:none;border-radius:8px;padding:11px 20px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;}
+  .btn-primary{background:var(--ink);color:#fff;}
+  .btn-primary:hover{background:#000;}
+  .btn-ghost{background:none;color:var(--ink);border:1.5px solid var(--line);}
+  .btn-ghost:disabled{opacity:.35;cursor:default;}
+  .btn-accent{background:var(--accent);color:#fff;}
+
+  /* ---------- Preview column ---------- */
+  .preview-col{padding:28px;background:var(--paper-alt);}
+  .preview-controls{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px;margin-bottom:20px;}
+  .template-tabs{display:flex;gap:6px;background:#fff;border:1px solid var(--line);border-radius:9px;padding:4px;}
+  .template-tabs button{border:none;background:none;padding:7px 13px;border-radius:6px;font-size:12.5px;font-weight:600;cursor:pointer;color:var(--muted);}
+  .template-tabs button.active{background:var(--ink);color:#fff;}
+  .swatches{display:flex;gap:7px;align-items:center;}
+  .swatch{width:20px;height:20px;border-radius:50%;cursor:pointer;border:2px solid transparent;}
+  .swatch.active{border-color:var(--ink);}
+
+  .paper-wrap{display:flex;justify-content:center;}
+  .paper{width:100%;max-width:640px;background:#fff;box-shadow:0 10px 30px rgba(28,35,51,.14);border-radius:2px;padding:46px 42px;min-height:800px;}
+
+  .download-row{display:flex;justify-content:center;margin-top:22px;}
+  .download-btn{display:flex;align-items:center;gap:8px;background:var(--accent);color:#fff;padding:13px 26px;border-radius:9px;border:none;font-size:14.5px;font-weight:700;cursor:pointer;}
+  .download-btn:hover{background:var(--green-dark);}
+
+  /* ---------- Resume templates ---------- */
+  .r-name{font-family:'Fraunces',serif;font-weight:700;line-height:1.05;}
+  .r-title{color:var(--accent);font-weight:600;}
+  .r-section-title{font-family:'IBM Plex Mono',monospace;letter-spacing:.1em;text-transform:uppercase;font-size:11.5px;color:var(--accent);margin:22px 0 10px;display:flex;align-items:center;gap:6px;}
+  .r-section-title svg{width:13px;height:13px;flex-shrink:0;}
+  .tpl-minimal .r-section-title{justify-content:flex-start;}
+  .r-item{margin-bottom:14px;}
+  .r-item-head{display:flex;justify-content:space-between;font-size:13.5px;font-weight:600;}
+  .r-item-sub{font-size:12.5px;color:var(--muted);margin-bottom:5px;}
+  .r-item ul{margin:4px 0 0;padding-left:18px;font-size:13px;line-height:1.55;}
+  .r-contact{font-size:12px;color:var(--muted);margin-top:6px;}
+  .r-skills{display:flex;flex-wrap:wrap;gap:7px;}
+  .r-skill-pill{font-size:11.5px;background:var(--paper-alt);padding:4px 10px;border-radius:5px;}
+
+  /* Modern template */
+  .tpl-modern .r-header{border-bottom:3px solid var(--accent);padding-bottom:14px;margin-bottom:6px;}
+  .tpl-modern .r-name{font-size:30px;}
+  .tpl-modern .r-title{font-size:14px;margin-top:2px;}
+
+  /* Classic / ATS template */
+  .tpl-classic{font-family:'Inter',sans-serif;}
+  .tpl-classic .r-name{font-family:'Inter',sans-serif;font-size:24px;font-weight:700;color:#000;}
+  .tpl-classic .r-title{color:#000;font-weight:500;}
+  .tpl-classic .r-section-title{font-family:'Inter',sans-serif;color:#000;border-bottom:1.5px solid #000;padding-bottom:4px;letter-spacing:.03em;}
+  .tpl-classic .r-header{border-bottom:1.5px solid #000;padding-bottom:12px;}
+
+  /* Minimalist template */
+  .tpl-minimal .r-header{text-align:center;padding-bottom:16px;}
+  .tpl-minimal .r-name{font-size:27px;letter-spacing:.02em;}
+  .tpl-minimal .r-section-title{text-align:left;border-top:1px solid var(--line);padding-top:12px;}
+  .tpl-minimal .r-contact{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;}
+
+  /* ---------- Payment modal ---------- */
+  .modal-overlay{position:fixed;inset:0;background:rgba(28,35,51,.55);display:flex;align-items:center;justify-content:center;z-index:50;}
+  .modal{background:#fff;border-radius:14px;width:100%;max-width:420px;padding:28px;}
+  .modal h3{font-size:19px;margin-bottom:4px;}
+  .modal .modal-sub{color:var(--muted);font-size:13px;margin-bottom:18px;}
+  .pay-tabs{display:flex;gap:8px;margin-bottom:18px;}
+  .pay-tabs button{flex:1;padding:10px;border-radius:8px;border:1.5px solid var(--line);background:#fff;font-weight:600;font-size:13px;cursor:pointer;}
+  .pay-tabs button.active{border-color:var(--accent);background:var(--paper-alt);color:var(--accent);}
+  .price-box{background:var(--paper-alt);border-radius:9px;padding:14px 16px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;}
+  .price-box .amt{font-family:'Fraunces',serif;font-size:22px;font-weight:700;}
+  .modal-actions{display:flex;gap:10px;margin-top:20px;}
+  .modal-actions .btn{flex:1;}
+  .modal-close{position:absolute;top:16px;right:20px;background:none;border:none;font-size:18px;cursor:pointer;color:var(--muted);}
+  .modal{position:relative;}
+  .spinner{width:16px;height:16px;border:2.5px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:inline-block;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .demo-note{font-size:11px;color:var(--muted);background:var(--paper-alt);border-radius:7px;padding:8px 10px;margin-top:14px;line-height:1.5;}
+  .success-box{text-align:center;padding:10px 0 4px;}
+  .success-box .check{width:48px;height:48px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:24px;margin:0 auto 14px;}
+
+  @media print{
+    body *{visibility:hidden;}
+    #printArea, #printArea *{visibility:visible;-webkit-print-color-adjust:exact;print-color-adjust:exact;color-adjust:exact;}
+    #printArea{position:absolute;top:0;left:0;width:100%;box-shadow:none;padding:0;}
+    #printArea svg{display:inline-block !important;}
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <h1>JengaCV</h1>
+    <span class="tag">BUILD · PREVIEW · DOWNLOAD</span>
+  </div>
+  <div class="credits-pill"><span class="dot"></span><span id="creditsText">0 of 3 downloads remaining</span></div>
+</div>
+
+<div class="layout">
+  <!-- FORM COLUMN -->
+  <div class="form-col">
+    <div class="stepper" id="stepper"></div>
+    <div id="stepContent"></div>
+    <div class="nav-row">
+      <button class="btn btn-ghost" id="prevBtn">Back</button>
+      <button class="btn btn-primary" id="nextBtn">Next</button>
+    </div>
+  </div>
+
+  <!-- PREVIEW COLUMN -->
+  <div class="preview-col">
+    <div class="preview-controls">
+      <div class="template-tabs" id="templateTabs"></div>
+      <div class="swatches" id="swatches"></div>
+    </div>
+    <div class="paper-wrap">
+      <div class="paper" id="printArea">
+        <div id="resumePreview"></div>
+      </div>
+    </div>
+    <div class="download-row">
+      <button class="download-btn" id="downloadBtn">⭳ Download PDF</button>
+    </div>
+  </div>
+</div>
+
+<div id="modalRoot"></div>
+
+<script>
+/* ---------------- ICONS ---------------- */
+const ICONS = {
+  user: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`,
+  fileText: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>`,
+  briefcase: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>`,
+  cap: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10 12 5 2 10l10 5 10-5Z"/><path d="M6 12v5c0 1.5 3 3 6 3s6-1.5 6-3v-5"/></svg>`,
+  award: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.5 13.5 17 22l-5-3-5 3 1.5-8.5"/></svg>`,
+  mail: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 6-10 7L2 6"/></svg>`,
+  phone: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.68 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.9.32 1.85.55 2.81.68A2 2 0 0 1 22 16.92Z"/></svg>`,
+  pin: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>`,
+  link: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>`,
+  camera: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3Z"/><circle cx="12" cy="13" r="4"/></svg>`,
+};
+const STEP_ICONS = ['user','fileText','briefcase','cap','award'];
+
+/* ---------------- STATE ---------------- */
+const state = {
+  step: 0,
+  template: 'modern',
+  accent: '#1f6f5c',
+  personal: { name:'', title:'', email:'', phone:'', location:'', linkedin:'', photo:null },
+  summary: '',
+  experience: [ mkExperience() ],
+  education: [ mkEducation() ],
+  skills: '',
+  certifications: [ mkCert() ],
+  downloadsRemaining: 0
+};
+
+function mkExperience(){ return { title:'', company:'', location:'', start:'', end:'', achievements:'' }; }
+function mkEducation(){ return { degree:'', institution:'', location:'', start:'', end:'', grade:'' }; }
+function mkCert(){ return { name:'', issuer:'', date:'' }; }
+
+const STEPS = ['Personal Details','Professional Summary','Work Experience','Education','Skills & Certifications'];
+const TEMPLATES = [ {id:'modern',label:'Modern'}, {id:'classic',label:'Classic (ATS)'}, {id:'minimal',label:'Minimalist'} ];
+const ACCENTS = ['#1f6f5c','#1c2333','#a4383a','#2a5599','#c89b3c'];
+
+/* ---------------- HELPERS ---------------- */
+function setPath(obj, path, value){
+  const parts = path.split('.');
+  let cur = obj;
+  for(let i=0;i<parts.length-1;i++){
+    let p = parts[i];
+    p = isNaN(p) ? p : Number(p);
+    cur = cur[p];
+  }
+  let last = parts[parts.length-1];
+  last = isNaN(last) ? last : Number(last);
+  cur[last] = value;
+}
+function esc(s){ return (s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+/* ---------------- RENDER: STEPPER ---------------- */
+function renderStepper(){
+  const el = document.getElementById('stepper');
+  el.innerHTML = STEPS.map((s,i)=>{
+    let cls = 'step-pip';
+    if(i === state.step) cls += ' active';
+    else if(i < state.step) cls += ' done';
+    return `<div class="${cls}" title="${s}" data-goto="${i}">
+      <div class="icon-wrap">${ICONS[STEP_ICONS[i]]}</div>
+      <div class="bar"></div>
+    </div>`;
+  }).join('');
+  el.querySelectorAll('[data-goto]').forEach(p=>p.addEventListener('click', ()=>{
+    state.step = Number(p.dataset.goto); renderStepper(); renderStep();
+  }));
+}
+
+/* ---------------- RENDER: FORM STEP ---------------- */
+function renderStep(){
+  const el = document.getElementById('stepContent');
+  const label = `<div class="step-label"><div class="icon-badge">${ICONS[STEP_ICONS[state.step]]}</div><div><div class="eyebrow">Step ${state.step+1} of ${STEPS.length}</div><h2>${STEPS[state.step]}</h2></div></div>`;
+  let body = '';
+
+  if(state.step === 0){
+    const p = state.personal;
+    body = `
+      <div class="photo-row">
+        <div class="photo-preview" id="photoPreview">${p.photo ? `<img src="${p.photo}" alt="">` : ICONS.camera}</div>
+        <div class="photo-actions">
+          <label class="upload-btn" for="photoInput">${ICONS.camera} Upload photo</label>
+          <input type="file" id="photoInput" accept="image/*">
+          ${p.photo ? `<button class="remove-photo" id="removePhoto">Remove photo</button>` : ''}
+        </div>
+      </div>
+      <div class="field"><label>Full name</label><input type="text" data-field="personal.name" value="${esc(p.name)}" placeholder="Wanjiru Kamau"></div>
+      <div class="field"><label>Professional title</label><input type="text" data-field="personal.title" value="${esc(p.title)}" placeholder="Operations Manager"></div>
+      <div class="row2">
+        <div class="field"><label>Email</label><input type="email" data-field="personal.email" value="${esc(p.email)}" placeholder="wanjiru@email.com"></div>
+        <div class="field"><label>Phone</label><input type="tel" data-field="personal.phone" value="${esc(p.phone)}" placeholder="+254 7XX XXX XXX"></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>Location</label><input type="text" data-field="personal.location" value="${esc(p.location)}" placeholder="Nairobi, Kenya"></div>
+        <div class="field"><label>LinkedIn <span class="hint">optional</span></label><input type="text" data-field="personal.linkedin" value="${esc(p.linkedin)}" placeholder="linkedin.com/in/..."></div>
+      </div>`;
+  }
+
+  else if(state.step === 1){
+    body = `<div class="field"><label>Summary <span class="hint">2–4 sentences</span></label>
+      <textarea data-field="summary" rows="6" placeholder="Results-driven operations manager with 6+ years leading BPO contact center teams...">${esc(state.summary)}</textarea></div>`;
+  }
+
+  else if(state.step === 2){
+    body = state.experience.map((exp,i)=>`
+      <div class="entry-card">
+        ${state.experience.length>1?`<button class="remove-btn" data-remove="experience.${i}">REMOVE</button>`:''}
+        <div class="row2">
+          <div class="field"><label>Job title</label><input type="text" data-field="experience.${i}.title" value="${esc(exp.title)}" placeholder="Team Leader"></div>
+          <div class="field"><label>Company</label><input type="text" data-field="experience.${i}.company" value="${esc(exp.company)}" placeholder="JetBlue Airways (Outsourced)"></div>
+        </div>
+        <div class="row2">
+          <div class="field"><label>Start date</label><input type="text" data-field="experience.${i}.start" value="${esc(exp.start)}" placeholder="Jan 2022"></div>
+          <div class="field"><label>End date</label><input type="text" data-field="experience.${i}.end" value="${esc(exp.end)}" placeholder="Present"></div>
+        </div>
+        <div class="field"><label>Location</label><input type="text" data-field="experience.${i}.location" value="${esc(exp.location)}" placeholder="Nairobi, Kenya"></div>
+        <div class="field"><label>Key achievements <span class="hint">one per line</span></label>
+          <textarea data-field="experience.${i}.achievements" rows="4" placeholder="Improved CSAT by 12% over two quarters">${esc(exp.achievements)}</textarea></div>
+      </div>`).join('') + `<button class="add-btn" id="addExperience">+ Add another role</button>`;
+  }
+
+  else if(state.step === 3){
+    body = state.education.map((ed,i)=>`
+      <div class="entry-card">
+        ${state.education.length>1?`<button class="remove-btn" data-remove="education.${i}">REMOVE</button>`:''}
+        <div class="field"><label>Degree / Qualification</label><input type="text" data-field="education.${i}.degree" value="${esc(ed.degree)}" placeholder="BSc Telecommunications Engineering"></div>
+        <div class="field"><label>Institution</label><input type="text" data-field="education.${i}.institution" value="${esc(ed.institution)}" placeholder="Jomo Kenyatta University"></div>
+        <div class="row2">
+          <div class="field"><label>Start</label><input type="text" data-field="education.${i}.start" value="${esc(ed.start)}" placeholder="2015"></div>
+          <div class="field"><label>End</label><input type="text" data-field="education.${i}.end" value="${esc(ed.end)}" placeholder="2019"></div>
+        </div>
+        <div class="field"><label>Grade / Honors <span class="hint">optional</span></label><input type="text" data-field="education.${i}.grade" value="${esc(ed.grade)}" placeholder="Second Class Upper"></div>
+      </div>`).join('') + `<button class="add-btn" id="addEducation">+ Add another qualification</button>`;
+  }
+
+  else if(state.step === 4){
+    body = `
+      <div class="field"><label>Skills <span class="hint">comma-separated</span></label>
+        <textarea data-field="skills" rows="3" placeholder="Workforce management, KPI reporting, Stakeholder presentations, Excel">${esc(state.skills)}</textarea></div>
+      <div style="margin-top:8px;">
+      ${state.certifications.map((c,i)=>`
+        <div class="entry-card">
+          ${state.certifications.length>1?`<button class="remove-btn" data-remove="certifications.${i}">REMOVE</button>`:''}
+          <div class="row2">
+            <div class="field"><label>Certification</label><input type="text" data-field="certifications.${i}.name" value="${esc(c.name)}" placeholder="IBM Data Analytics Professional Cert"></div>
+            <div class="field"><label>Issuer</label><input type="text" data-field="certifications.${i}.issuer" value="${esc(c.issuer)}" placeholder="Coursera / IBM"></div>
+          </div>
+          <div class="field"><label>Date</label><input type="text" data-field="certifications.${i}.date" value="${esc(c.date)}" placeholder="2026"></div>
+        </div>`).join('')}
+      <button class="add-btn" id="addCert">+ Add another certification</button>
+      </div>`;
+  }
+
+  el.innerHTML = label + body;
+
+  el.querySelectorAll('[data-field]').forEach(input=>{
+    input.addEventListener('input', e=>{
+      setPath(state, e.target.dataset.field, e.target.value);
+      renderPreview();
+    });
+  });
+  el.querySelectorAll('[data-remove]').forEach(btn=>{
+    btn.addEventListener('click', e=>{
+      const [arr, idx] = e.target.dataset.remove.split('.');
+      state[arr].splice(Number(idx),1);
+      renderStep(); renderPreview();
+    });
+  });
+  const addExp = document.getElementById('addExperience');
+  if(addExp) addExp.addEventListener('click', ()=>{ state.experience.push(mkExperience()); renderStep(); });
+  const addEdu = document.getElementById('addEducation');
+  if(addEdu) addEdu.addEventListener('click', ()=>{ state.education.push(mkEducation()); renderStep(); });
+  const addCert = document.getElementById('addCert');
+  if(addCert) addCert.addEventListener('click', ()=>{ state.certifications.push(mkCert()); renderStep(); });
+
+  const photoInput = document.getElementById('photoInput');
+  if(photoInput) photoInput.addEventListener('change', e=>{
+    const file = e.target.files[0];
+    if(!file) return;
+    if(file.size > 2*1024*1024){ alert('Please choose an image under 2MB.'); return; }
+    const reader = new FileReader();
+    reader.onload = ()=>{ state.personal.photo = reader.result; renderStep(); renderPreview(); };
+    reader.readAsDataURL(file);
+  });
+  const removePhoto = document.getElementById('removePhoto');
+  if(removePhoto) removePhoto.addEventListener('click', ()=>{ state.personal.photo = null; renderStep(); renderPreview(); });
+
+  document.getElementById('prevBtn').disabled = state.step === 0;
+  document.getElementById('nextBtn').textContent = state.step === STEPS.length-1 ? 'Done — review CV' : 'Next';
+}
+
+/* ---------------- RENDER: TEMPLATE / ACCENT CONTROLS ---------------- */
+function renderControls(){
+  const tabs = document.getElementById('templateTabs');
+  tabs.innerHTML = TEMPLATES.map(t=>`<button data-tpl="${t.id}" class="${state.template===t.id?'active':''}">${t.label}</button>`).join('');
+  tabs.querySelectorAll('button').forEach(b=>b.addEventListener('click', ()=>{ state.template=b.dataset.tpl; renderControls(); renderPreview(); }));
+
+  const sw = document.getElementById('swatches');
+  sw.innerHTML = ACCENTS.map(c=>`<div class="swatch ${state.accent===c?'active':''}" style="background:${c}" data-c="${c}"></div>`).join('');
+  sw.querySelectorAll('.swatch').forEach(s=>s.addEventListener('click', ()=>{ state.accent=s.dataset.c; renderControls(); renderPreview(); }));
+}
+
+/* ---------------- RENDER: PREVIEW ---------------- */
+function renderPreview(){
+  document.documentElement.style.setProperty('--accent', state.accent);
+  const p = state.personal;
+  const skillsArr = state.skills.split(',').map(s=>s.trim()).filter(Boolean);
+
+  const expHtml = state.experience.filter(e=>e.title||e.company).map(e=>`
+    <div class="r-item">
+      <div class="r-item-head"><span>${esc(e.title)||'Job title'}${e.company?' · '+esc(e.company):''}</span><span>${esc(e.start)} – ${esc(e.end)}</span></div>
+      <div class="r-item-sub">${esc(e.location)}</div>
+      ${e.achievements.trim()?`<ul>${e.achievements.split('\n').filter(Boolean).map(l=>`<li>${esc(l)}</li>`).join('')}</ul>`:''}
+    </div>`).join('');
+
+  const eduHtml = state.education.filter(e=>e.degree||e.institution).map(e=>`
+    <div class="r-item">
+      <div class="r-item-head"><span>${esc(e.degree)||'Qualification'}</span><span>${esc(e.start)} – ${esc(e.end)}</span></div>
+      <div class="r-item-sub">${esc(e.institution)}${e.grade?' · '+esc(e.grade):''}</div>
+    </div>`).join('');
+
+  const certHtml = state.certifications.filter(c=>c.name).map(c=>`
+    <div class="r-item">
+      <div class="r-item-head"><span>${esc(c.name)}</span><span>${esc(c.date)}</span></div>
+      <div class="r-item-sub">${esc(c.issuer)}</div>
+    </div>`).join('');
+
+  const contactParts = [];
+  if(p.email) contactParts.push(`<span class="r-contact-icon">${ICONS.mail}${esc(p.email)}</span>`);
+  if(p.phone) contactParts.push(`<span class="r-contact-icon">${ICONS.phone}${esc(p.phone)}</span>`);
+  if(p.location) contactParts.push(`<span class="r-contact-icon">${ICONS.pin}${esc(p.location)}</span>`);
+  if(p.linkedin) contactParts.push(`<span class="r-contact-icon">${ICONS.link}${esc(p.linkedin)}</span>`);
+  const contactBits = contactParts.join('  ·  ');
+  const avatarHtml = p.photo ? `<img src="${p.photo}" class="r-avatar" alt="">` : '';
+
+  document.getElementById('resumePreview').innerHTML = `
+    <div class="r-header">
+      <div class="r-header-flex">
+        ${avatarHtml}
+        <div>
+          <div class="r-name">${esc(p.name) || 'Your Name'}</div>
+          <div class="r-title">${esc(p.title) || 'Professional Title'}</div>
+          <div class="r-contact">${contactBits || 'email · phone · location'}</div>
+        </div>
+      </div>
+    </div>
+    ${state.summary ? `<div class="r-section-title">${ICONS.fileText}Summary</div><div style="font-size:13px;line-height:1.6">${esc(state.summary)}</div>` : ''}
+    ${expHtml ? `<div class="r-section-title">${ICONS.briefcase}Experience</div>${expHtml}` : ''}
+    ${eduHtml ? `<div class="r-section-title">${ICONS.cap}Education</div>${eduHtml}` : ''}
+    ${skillsArr.length ? `<div class="r-section-title">${ICONS.award}Skills</div><div class="r-skills">${skillsArr.map(s=>`<span class="r-skill-pill">${esc(s)}</span>`).join('')}</div>` : ''}
+    ${certHtml ? `<div class="r-section-title">${ICONS.award}Certifications</div>${certHtml}` : ''}
+  `;
+
+  document.getElementById('printArea').className = 'paper tpl-' + state.template;
+}
+
+/* ---------------- CREDITS ---------------- */
+function renderCredits(){
+  document.getElementById('creditsText').textContent = `${state.downloadsRemaining} of 3 downloads remaining`;
+}
+
+/* ---------------- NAV ---------------- */
+document.getElementById('prevBtn').addEventListener('click', ()=>{
+  if(state.step>0){ state.step--; renderStepper(); renderStep(); }
+});
+document.getElementById('nextBtn').addEventListener('click', ()=>{
+  if(state.step < STEPS.length-1){ state.step++; renderStepper(); renderStep(); }
+  else { document.querySelector('.preview-col').scrollIntoView({behavior:'smooth'}); }
+});
+
+/* ---------------- ANONYMOUS USER ID ----------------
+   No login for MVP: a random ID persists in this browser and maps to a
+   users row + credit balance on the server. Note: localStorage does not
+   work inside Claude.ai's in-chat artifact preview — this code path is
+   for the real deployed version only (see README). */
+function getAnonId(){
+  let id;
+  try { id = localStorage.getItem('jengacv_uid'); } catch(e){ id = null; }
+  if(!id){
+    id = 'u_' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+    try { localStorage.setItem('jengacv_uid', id); } catch(e){ /* storage unavailable */ }
+  }
+  return id;
+}
+const ANON_ID = getAnonId();
+
+async function initUser(){
+  try{
+    const res = await fetch('/api/users/init', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ anonId: ANON_ID })
+    });
+    if(!res.ok) return;
+    const data = await res.json();
+    state.downloadsRemaining = data.downloadsRemaining || 0;
+    renderCredits();
+  } catch(err){
+    console.warn('Could not reach server for user init (expected if running without a backend):', err.message);
+  }
+}
+
+/* ---------------- DOWNLOAD + PAYMENT ---------------- */
+document.getElementById('downloadBtn').addEventListener('click', ()=>{
+  if(state.downloadsRemaining > 0){
+    doDownload();
+  } else {
+    openPaymentModal();
+  }
+});
+
+// Server is the single source of truth for credits — it decrements and
+// confirms before we ever call window.print().
+async function doDownload(){
+  try{
+    const res = await fetch('/api/downloads/consume', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ anonId: ANON_ID })
+    });
+    const data = await res.json();
+    if(!res.ok){
+      if(res.status === 402){ openPaymentModal(); return; }
+      alert(data.error || 'Could not process download. Please try again.');
+      return;
+    }
+    state.downloadsRemaining = data.downloadsRemaining;
+    renderCredits();
+    window.print();
+  } catch(err){
+    alert('Network error — please check your connection and try again.');
+  }
+}
+
+function openPaymentModal(){
+  const root = document.getElementById('modalRoot');
+  let method = 'mpesa';
+  root.innerHTML = `
+    <div class="modal-overlay">
+      <div class="modal">
+        <button class="modal-close" id="closeModal">✕</button>
+        <h3>Unlock 3 downloads</h3>
+        <div class="modal-sub">Building and previewing your CV is free. Pay once to download 3 PDF copies (including re-downloads after edits).</div>
+        <div class="pay-tabs">
+          <button data-m="mpesa" class="active">M-Pesa</button>
+          <button data-m="card">Card</button>
+        </div>
+        <div class="price-box"><span>JengaCV — 3 downloads</span><span class="amt">KSh 500</span></div>
+        <div id="payFields"></div>
+        <div id="payStatus"></div>
+        <div class="modal-actions">
+          <button class="btn btn-ghost" id="cancelPay">Cancel</button>
+          <button class="btn btn-accent" id="confirmPay">Pay KSh 500</button>
+        </div>
+      </div>
+    </div>`;
+
+  function renderFields(){
+    const box = document.getElementById('payFields');
+    if(method==='mpesa'){
+      box.innerHTML = `<div class="field"><label>M-Pesa phone number</label><input type="tel" id="mpesaPhone" placeholder="07XX XXX XXX"></div>`;
+    } else {
+      box.innerHTML = `<div class="field"><label>Email <span class="hint">for your receipt</span></label><input type="email" id="cardEmail" placeholder="you@email.com"></div>
+        <div class="demo-note">You'll be taken to Pesapal's secure checkout in a new tab to enter your card details — JengaCV never sees your card number.</div>`;
+    }
+  }
+  renderFields();
+
+  root.querySelectorAll('.pay-tabs button').forEach(b=>b.addEventListener('click', ()=>{
+    method = b.dataset.m;
+    root.querySelectorAll('.pay-tabs button').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    renderFields();
+    document.getElementById('payStatus').innerHTML = '';
+  }));
+
+  document.getElementById('closeModal').addEventListener('click', closeModal);
+  document.getElementById('cancelPay').addEventListener('click', closeModal);
+  document.getElementById('confirmPay').addEventListener('click', async (e)=>{
+    const btn = e.target;
+
+    if(method === 'mpesa'){
+      const phone = (document.getElementById('mpesaPhone').value || '').trim();
+      if(!phone){ document.getElementById('payStatus').innerHTML = `<div class="demo-note">Enter your M-Pesa phone number.</div>`; return; }
+
+      btn.disabled = true;
+      document.getElementById('cancelPay').disabled = true;
+      btn.innerHTML = `<span class="spinner"></span> Sending prompt to your phone…`;
+
+      try{
+        const res = await fetch('/api/mpesa/stkpush', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ anonId: ANON_ID, phone })
+        });
+        const data = await res.json();
+        if(!res.ok){ showError(data.error || 'Could not start payment.'); return; }
+        btn.innerHTML = `<span class="spinner"></span> Waiting for M-Pesa PIN…`;
+        pollPaymentStatus(data.checkoutRequestId);
+      } catch(err){
+        showError('Network error while starting payment.');
+      }
+      return;
+    }
+
+    // Card via Pesapal hosted checkout
+    const email = (document.getElementById('cardEmail').value || '').trim();
+    if(!email){ document.getElementById('payStatus').innerHTML = `<div class="demo-note">Enter your email to continue to checkout.</div>`; return; }
+
+    btn.disabled = true;
+    document.getElementById('cancelPay').disabled = true;
+    btn.innerHTML = `<span class="spinner"></span> Opening secure checkout…`;
+
+    try{
+      const res = await fetch('/api/pesapal/initiate', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ anonId: ANON_ID, email })
+      });
+      const data = await res.json();
+      if(!res.ok){ showError(data.error || 'Could not start card payment.'); return; }
+
+      const checkoutWindow = window.open(data.redirectUrl, '_blank');
+      if(!checkoutWindow){
+        showError('Your browser blocked the checkout popup. Please allow popups for this site and try again.');
+        return;
+      }
+      document.getElementById('payStatus').innerHTML = `<div class="demo-note">Complete your card payment in the new tab. This page will update automatically once it's confirmed.</div>`;
+      btn.innerHTML = `<span class="spinner"></span> Waiting for payment…`;
+      pollPaymentStatus(data.orderTrackingId);
+    } catch(err){
+      showError('Network error while starting payment.');
+    }
+  });
+
+  function showError(msg){
+    document.getElementById('payStatus').innerHTML = `<div class="demo-note">${msg}</div>`;
+    const btn = document.getElementById('confirmPay');
+    btn.disabled = false;
+    btn.textContent = 'Pay KSh 500';
+    document.getElementById('cancelPay').disabled = false;
+  }
+
+  // Generic poller — works for both the M-Pesa CheckoutRequestID and the
+  // Pesapal OrderTrackingId, since /api/payments/status handles both.
+  async function pollPaymentStatus(reference){
+    const maxAttempts = 60; // ~3 min at 3s intervals — card checkout takes longer than STK push
+    let attempts = 0;
+    const interval = setInterval(async ()=>{
+      attempts++;
+      try{
+        const res = await fetch(`/api/payments/status/${reference}`);
+        const data = await res.json();
+        if(data.status === 'success'){
+          clearInterval(interval);
+          state.downloadsRemaining = data.downloadsRemaining;
+          renderCredits();
+          showSuccess();
+        } else if(data.status === 'failed'){
+          clearInterval(interval);
+          showError('Payment was not completed. You can try again.');
+        } else if(attempts >= maxAttempts){
+          clearInterval(interval);
+          showError('Still waiting on confirmation. If you completed payment, this can take a moment — otherwise you can try again.');
+        }
+      } catch(err){
+        // transient network hiccup — keep polling until maxAttempts
+      }
+    }, 3000);
+  }
+
+  function closeModal(){ root.innerHTML=''; }
+
+  function showSuccess(){
+    document.querySelector('.modal').innerHTML = `
+      <button class="modal-close" id="closeModal2">✕</button>
+      <div class="success-box">
+        <div class="check">✓</div>
+        <h3>Payment successful</h3>
+        <div class="modal-sub">3 downloads unlocked. Your CV is ready.</div>
+        <button class="btn btn-accent" id="downloadNow" style="width:100%;margin-top:10px;">Download my CV now</button>
+      </div>`;
+    document.getElementById('closeModal2').addEventListener('click', closeModal);
+    document.getElementById('downloadNow').addEventListener('click', ()=>{
+      closeModal();
+      doDownload();
+    });
+  }
+}
+
+/* ---------------- INIT ---------------- */
+renderStepper();
+renderStep();
+renderControls();
+renderPreview();
+renderCredits();
+initUser();
+</script>
+
+</body>
+</html>

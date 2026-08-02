@@ -1,0 +1,34 @@
+services:
+  - type: web
+    name: jengacv
+    runtime: node
+    plan: free
+    buildCommand: cd server && npm install
+    startCommand: cd server && npm start
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: jengacv-db
+          property: connectionString
+      - key: DARAJA_CONSUMER_KEY
+        sync: false
+      - key: DARAJA_CONSUMER_SECRET
+        sync: false
+      - key: DARAJA_SHORTCODE
+        value: "174379"
+      - key: DARAJA_PASSKEY
+        sync: false
+      - key: DARAJA_ENV
+        value: sandbox
+      - key: CALLBACK_BASE_URL
+        sync: false
+      - key: PESAPAL_CONSUMER_KEY
+        sync: false
+      - key: PESAPAL_CONSUMER_SECRET
+        sync: false
+      - key: PESAPAL_ENV
+        value: sandbox
+
+databases:
+  - name: jengacv-db
+    plan: free
