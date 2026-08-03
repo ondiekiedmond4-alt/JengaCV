@@ -33,6 +33,28 @@
   .brand .tag{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--gold);letter-spacing:.08em;}
   .credits-pill{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);padding:7px 14px;border-radius:999px;font-size:13px;}
   .credits-pill .dot{width:7px;height:7px;border-radius:50%;background:var(--gold);}
+  .user-pill{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);padding:6px 8px 6px 14px;border-radius:999px;font-size:13px;color:#fff;}
+  .user-pill #logoutBtn{background:none;border:none;color:rgba(255,255,255,.7);font-size:15px;cursor:pointer;padding:4px 6px;border-radius:6px;}
+  .user-pill #logoutBtn:hover{background:rgba(255,255,255,.12);color:#fff;}
+
+  /* ---------- Auth gate ---------- */
+  .auth-gate{position:fixed;inset:0;background:var(--paper);display:flex;align-items:center;justify-content:center;z-index:40;padding:20px;}
+  .auth-card{background:#fff;border-radius:16px;padding:32px;width:100%;max-width:400px;box-shadow:0 10px 30px rgba(28,35,51,.12);}
+  .auth-brand{text-align:center;margin-bottom:20px;}
+  .auth-note{font-size:11.5px;color:var(--muted);text-align:center;line-height:1.5;margin:16px 0 0;}
+  #authError .demo-note{background:#fbeceb;color:var(--danger);margin-top:12px;margin-bottom:0;}
+  #authError:empty{display:none;}
+
+  /* ---------- Background pattern controls ---------- */
+  .control-row{display:flex;align-items:center;gap:12px;margin-bottom:18px;}
+  .control-label{font-size:12px;font-weight:600;color:var(--muted);}
+  .pattern-swatches{display:flex;gap:7px;}
+  .pattern-swatch{width:30px;height:30px;border-radius:7px;border:1.5px solid var(--line);cursor:pointer;background:#fff;position:relative;overflow:hidden;}
+  .pattern-swatch.active{border-color:var(--ink);border-width:2px;}
+  .pattern-swatch[data-p="dots"]{background-image:radial-gradient(circle, var(--accent) 1.4px, transparent 1.4px);background-size:8px 8px;}
+  .pattern-swatch[data-p="lines"]{background-image:repeating-linear-gradient(45deg, var(--accent) 0 1.5px, transparent 1.5px 7px);}
+  .pattern-swatch[data-p="grid"]{background-image:linear-gradient(var(--accent) 1px, transparent 1px), linear-gradient(90deg, var(--accent) 1px, transparent 1px);background-size:9px 9px;}
+  .pattern-swatch[data-p="corner"]{background-image:radial-gradient(circle at top left, var(--accent) 0%, transparent 60%), radial-gradient(circle at bottom right, var(--accent) 0%, transparent 60%);}
 
   .layout{display:grid;grid-template-columns:minmax(340px,440px) 1fr;gap:0;min-height:calc(100vh - 60px);}
   @media (max-width:900px){.layout{grid-template-columns:1fr;}}
@@ -107,7 +129,14 @@
   .swatch.active{border-color:var(--ink);}
 
   .paper-wrap{display:flex;justify-content:center;}
-  .paper{width:100%;max-width:640px;background:#fff;box-shadow:0 10px 30px rgba(28,35,51,.14);border-radius:2px;padding:46px 42px;min-height:800px;}
+  .paper{width:100%;max-width:640px;background:#fff;box-shadow:0 10px 30px rgba(28,35,51,.14);border-radius:2px;padding:46px 42px;min-height:800px;position:relative;overflow:hidden;}
+  .paper-pattern{position:absolute;inset:0;z-index:0;pointer-events:none;background-repeat:repeat;}
+  #resumePreview{position:relative;z-index:1;}
+  .paper-pattern.pat-none{display:none;}
+  .paper-pattern.pat-dots{background-image:radial-gradient(circle, var(--accent) 1.5px, transparent 1.5px);background-size:18px 18px;opacity:.10;}
+  .paper-pattern.pat-lines{background-image:repeating-linear-gradient(45deg, var(--accent) 0 2px, transparent 2px 14px);opacity:.06;}
+  .paper-pattern.pat-grid{background-image:linear-gradient(var(--accent) 1px, transparent 1px), linear-gradient(90deg, var(--accent) 1px, transparent 1px);background-size:26px 26px;opacity:.055;}
+  .paper-pattern.pat-corner{background-image:radial-gradient(circle at top left, var(--accent) 0%, transparent 32%), radial-gradient(circle at bottom right, var(--accent) 0%, transparent 32%);opacity:.10;background-repeat:no-repeat;}
 
   .download-row{display:flex;justify-content:center;margin-top:22px;}
   .download-btn{display:flex;align-items:center;gap:8px;background:var(--accent);color:#fff;padding:13px 26px;border-radius:9px;border:none;font-size:14.5px;font-weight:700;cursor:pointer;}
@@ -180,10 +209,33 @@
     <h1>JengaCV</h1>
     <span class="tag">BUILD · PREVIEW · DOWNLOAD</span>
   </div>
-  <div class="credits-pill"><span class="dot"></span><span id="creditsText">0 of 3 downloads remaining</span></div>
+  <div style="display:flex;align-items:center;gap:12px;">
+    <div class="credits-pill" id="creditsPill" style="display:none;"><span class="dot"></span><span id="creditsText">0 of 3 downloads remaining</span></div>
+    <div class="user-pill" id="userPill" style="display:none;">
+      <span id="userNameText"></span>
+      <button id="logoutBtn" title="Log out">⏻</button>
+    </div>
+  </div>
 </div>
 
-<div class="layout">
+<div class="auth-gate" id="authGate">
+  <div class="auth-card">
+    <div class="auth-brand">
+      <h1 style="color:var(--ink);font-size:24px;">JengaCV</h1>
+      <p class="eyebrow" style="margin-top:2px;">Set up your account to start building</p>
+    </div>
+    <div class="pay-tabs" id="authTabs">
+      <button data-a="login" class="active">Log in</button>
+      <button data-a="register">Create account</button>
+    </div>
+    <div id="authFields"></div>
+    <div id="authError"></div>
+    <button class="btn btn-accent" id="authSubmit" style="width:100%;margin-top:16px;">Log in</button>
+    <p class="auth-note">Building and downloading your CV is tied to your account, so your details and download credits are always where you left them.</p>
+  </div>
+</div>
+
+<div class="layout" id="mainLayout" style="display:none;">
   <!-- FORM COLUMN -->
   <div class="form-col">
     <div class="stepper" id="stepper"></div>
@@ -200,8 +252,13 @@
       <div class="template-tabs" id="templateTabs"></div>
       <div class="swatches" id="swatches"></div>
     </div>
+    <div class="control-row">
+      <span class="control-label">Background</span>
+      <div class="pattern-swatches" id="patternSwatches"></div>
+    </div>
     <div class="paper-wrap">
       <div class="paper" id="printArea">
+        <div class="paper-pattern" id="paperPattern"></div>
         <div id="resumePreview"></div>
       </div>
     </div>
@@ -214,6 +271,7 @@
 <div id="modalRoot"></div>
 
 <script>
+
 /* ---------------- ICONS ---------------- */
 const ICONS = {
   user: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`,
@@ -234,6 +292,7 @@ const state = {
   step: 0,
   template: 'modern',
   accent: '#1f6f5c',
+  pattern: 'none',
   personal: { name:'', title:'', email:'', phone:'', location:'', linkedin:'', photo:null },
   summary: '',
   experience: [ mkExperience() ],
@@ -250,6 +309,8 @@ function mkCert(){ return { name:'', issuer:'', date:'' }; }
 const STEPS = ['Personal Details','Professional Summary','Work Experience','Education','Skills & Certifications'];
 const TEMPLATES = [ {id:'modern',label:'Modern'}, {id:'classic',label:'Classic (ATS)'}, {id:'minimal',label:'Minimalist'} ];
 const ACCENTS = ['#1f6f5c','#1c2333','#a4383a','#2a5599','#c89b3c'];
+const PATTERNS = [ {id:'none',label:'Plain'}, {id:'dots',label:'Dots'}, {id:'lines',label:'Diagonal lines'}, {id:'grid',label:'Grid'}, {id:'corner',label:'Corner glow'} ];
+
 
 /* ---------------- HELPERS ---------------- */
 function setPath(obj, path, value){
@@ -414,6 +475,10 @@ function renderControls(){
   const sw = document.getElementById('swatches');
   sw.innerHTML = ACCENTS.map(c=>`<div class="swatch ${state.accent===c?'active':''}" style="background:${c}" data-c="${c}"></div>`).join('');
   sw.querySelectorAll('.swatch').forEach(s=>s.addEventListener('click', ()=>{ state.accent=s.dataset.c; renderControls(); renderPreview(); }));
+
+  const pat = document.getElementById('patternSwatches');
+  pat.innerHTML = PATTERNS.map(p=>`<div class="pattern-swatch ${state.pattern===p.id?'active':''}" data-p="${p.id}" title="${p.label}"></div>`).join('');
+  pat.querySelectorAll('.pattern-swatch').forEach(s=>s.addEventListener('click', ()=>{ state.pattern=s.dataset.p; renderControls(); renderPreview(); }));
 }
 
 /* ---------------- RENDER: PREVIEW ---------------- */
@@ -468,6 +533,7 @@ function renderPreview(){
   `;
 
   document.getElementById('printArea').className = 'paper tpl-' + state.template;
+  document.getElementById('paperPattern').className = 'paper-pattern pat-' + state.pattern;
 }
 
 /* ---------------- CREDITS ---------------- */
@@ -484,36 +550,119 @@ document.getElementById('nextBtn').addEventListener('click', ()=>{
   else { document.querySelector('.preview-col').scrollIntoView({behavior:'smooth'}); }
 });
 
-/* ---------------- ANONYMOUS USER ID ----------------
-   No login for MVP: a random ID persists in this browser and maps to a
-   users row + credit balance on the server. Note: localStorage does not
-   work inside Claude.ai's in-chat artifact preview — this code path is
-   for the real deployed version only (see README). */
-function getAnonId(){
-  let id;
-  try { id = localStorage.getItem('jengacv_uid'); } catch(e){ id = null; }
-  if(!id){
-    id = 'u_' + Math.random().toString(36).slice(2) + Date.now().toString(36);
-    try { localStorage.setItem('jengacv_uid', id); } catch(e){ /* storage unavailable */ }
-  }
-  return id;
-}
-const ANON_ID = getAnonId();
+/* ---------------- AUTHENTICATION ----------------
+   Real accounts: a JWT is issued on login/register and stored in this
+   browser, then sent as a Bearer token on every authenticated API call.
+   Note: localStorage does not work inside Claude.ai's in-chat artifact
+   preview — this code path is for the real deployed version only. */
+const TOKEN_KEY = 'jengacv_token';
+function getToken(){ try{ return localStorage.getItem(TOKEN_KEY); }catch(e){ return null; } }
+function setToken(t){ try{ localStorage.setItem(TOKEN_KEY, t); }catch(e){ /* storage unavailable */ } }
+function clearToken(){ try{ localStorage.removeItem(TOKEN_KEY); }catch(e){} }
+function authHeaders(extra){ return Object.assign({ Authorization: 'Bearer ' + getToken() }, extra || {}); }
 
-async function initUser(){
+async function checkAuth(){
+  const token = getToken();
+  if(!token){ showAuthGate(); return; }
   try{
-    const res = await fetch('/api/users/init', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ anonId: ANON_ID })
-    });
-    if(!res.ok) return;
+    const res = await fetch('/api/auth/me', { headers: authHeaders() });
+    if(!res.ok){ clearToken(); showAuthGate(); return; }
     const data = await res.json();
-    state.downloadsRemaining = data.downloadsRemaining || 0;
-    renderCredits();
+    onAuthenticated(data);
   } catch(err){
-    console.warn('Could not reach server for user init (expected if running without a backend):', err.message);
+    console.warn('Could not reach server to verify session:', err.message);
+    showAuthGate();
   }
 }
+
+function onAuthenticated(data){
+  state.downloadsRemaining = data.downloadsRemaining || 0;
+  document.getElementById('authGate').style.display = 'none';
+  document.getElementById('mainLayout').style.display = '';
+  document.getElementById('creditsPill').style.display = '';
+  document.getElementById('userPill').style.display = 'flex';
+  document.getElementById('userNameText').textContent = data.name;
+  renderCredits();
+}
+
+function showAuthGate(){
+  document.getElementById('authGate').style.display = 'flex';
+  document.getElementById('mainLayout').style.display = 'none';
+  document.getElementById('creditsPill').style.display = 'none';
+  document.getElementById('userPill').style.display = 'none';
+}
+
+let authMode = 'login';
+function renderAuthFields(){
+  const box = document.getElementById('authFields');
+  document.getElementById('authError').innerHTML = '';
+  if(authMode === 'register'){
+    box.innerHTML = `
+      <div class="field"><label>Full name</label><input type="text" id="authName" placeholder="Wanjiru Kamau"></div>
+      <div class="field"><label>Email</label><input type="email" id="authEmail" placeholder="you@email.com"></div>
+      <div class="field"><label>Password <span class="hint">min. 6 characters</span></label><input type="password" id="authPassword" placeholder="••••••••"></div>`;
+    document.getElementById('authSubmit').textContent = 'Create account';
+  } else {
+    box.innerHTML = `
+      <div class="field"><label>Email</label><input type="email" id="authEmail" placeholder="you@email.com"></div>
+      <div class="field"><label>Password</label><input type="password" id="authPassword" placeholder="••••••••"></div>`;
+    document.getElementById('authSubmit').textContent = 'Log in';
+  }
+}
+renderAuthFields();
+
+document.getElementById('authTabs').querySelectorAll('button').forEach(b=>{
+  b.addEventListener('click', ()=>{
+    authMode = b.dataset.a;
+    document.querySelectorAll('#authTabs button').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    renderAuthFields();
+  });
+});
+
+document.getElementById('authSubmit').addEventListener('click', async (e)=>{
+  const btn = e.target;
+  const email = (document.getElementById('authEmail').value || '').trim();
+  const password = document.getElementById('authPassword').value || '';
+  const name = authMode === 'register' ? (document.getElementById('authName').value || '').trim() : null;
+  const errBox = document.getElementById('authError');
+  errBox.innerHTML = '';
+
+  if(!email || !password || (authMode === 'register' && !name)){
+    errBox.innerHTML = `<div class="demo-note">Please fill in all fields.</div>`;
+    return;
+  }
+
+  btn.disabled = true;
+  const originalText = btn.textContent;
+  btn.innerHTML = `<span class="spinner"></span> ${authMode === 'register' ? 'Creating account…' : 'Logging in…'}`;
+
+  try{
+    const endpoint = authMode === 'register' ? '/api/auth/register' : '/api/auth/login';
+    const payload = authMode === 'register' ? { name, email, password } : { email, password };
+    const res = await fetch(endpoint, {
+      method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if(!res.ok){
+      errBox.innerHTML = `<div class="demo-note">${data.error || 'Something went wrong. Please try again.'}</div>`;
+      btn.disabled = false; btn.textContent = originalText;
+      return;
+    }
+    setToken(data.token);
+    onAuthenticated(data);
+  } catch(err){
+    errBox.innerHTML = `<div class="demo-note">Network error — please check your connection and try again.</div>`;
+    btn.disabled = false; btn.textContent = originalText;
+    return;
+  }
+  btn.disabled = false; btn.textContent = originalText;
+});
+
+document.getElementById('logoutBtn').addEventListener('click', ()=>{
+  clearToken();
+  showAuthGate();
+});
 
 /* ---------------- DOWNLOAD + PAYMENT ---------------- */
 document.getElementById('downloadBtn').addEventListener('click', ()=>{
@@ -529,12 +678,12 @@ document.getElementById('downloadBtn').addEventListener('click', ()=>{
 async function doDownload(){
   try{
     const res = await fetch('/api/downloads/consume', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ anonId: ANON_ID })
+      method:'POST', headers: authHeaders({'Content-Type':'application/json'})
     });
     const data = await res.json();
     if(!res.ok){
       if(res.status === 402){ openPaymentModal(); return; }
+      if(res.status === 401){ clearToken(); showAuthGate(); return; }
       alert(data.error || 'Could not process download. Please try again.');
       return;
     }
@@ -603,8 +752,8 @@ function openPaymentModal(){
 
       try{
         const res = await fetch('/api/mpesa/stkpush', {
-          method:'POST', headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({ anonId: ANON_ID, phone })
+          method:'POST', headers: authHeaders({'Content-Type':'application/json'}),
+          body: JSON.stringify({ phone })
         });
         const data = await res.json();
         if(!res.ok){ showError(data.error || 'Could not start payment.'); return; }
@@ -626,8 +775,8 @@ function openPaymentModal(){
 
     try{
       const res = await fetch('/api/pesapal/initiate', {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ anonId: ANON_ID, email })
+        method:'POST', headers: authHeaders({'Content-Type':'application/json'}),
+        body: JSON.stringify({ email })
       });
       const data = await res.json();
       if(!res.ok){ showError(data.error || 'Could not start card payment.'); return; }
@@ -661,7 +810,7 @@ function openPaymentModal(){
     const interval = setInterval(async ()=>{
       attempts++;
       try{
-        const res = await fetch(`/api/payments/status/${reference}`);
+        const res = await fetch(`/api/payments/status/${reference}`, { headers: authHeaders() });
         const data = await res.json();
         if(data.status === 'success'){
           clearInterval(interval);
@@ -706,7 +855,7 @@ renderStep();
 renderControls();
 renderPreview();
 renderCredits();
-initUser();
+checkAuth();
 </script>
 
 </body>

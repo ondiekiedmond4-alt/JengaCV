@@ -2,48 +2,24 @@ const express = require('express');
 const pool = require('../db');
 const { stkPush } = require('../daraja');
 const pesapal = require('../pesapal');
+const { requireAuth } = require('../auth');
 
 const router = express.Router();
 const DOWNLOAD_PRICE = 500;
 const CREDITS_PER_PAYMENT = 3;
 
-// Get-or-create an anonymous user record, return their current credit balance.
-router.post('/users/init', async (req, res) => {
+// Kick off an M-Pesa STK push for KSh 500, for the logged-in user.
+router.post('/mpesa/stkpush', requireAuth, async (req, res) => {
   try {
-    const { anonId } = req.body;
-    if (!anonId) return res.status(400).json({ error: 'anonId is required' });
-
-    const existing = await pool.query('SELECT * FROM users WHERE anon_id = $1', [anonId]);
-    if (existing.rows.length) {
-      return res.json({ downloadsRemaining: existing.rows[0].downloads_remaining });
-    }
-    const inserted = await pool.query(
-      'INSERT INTO users (anon_id) VALUES ($1) RETURNING *',
-      [anonId]
-    );
-    res.json({ downloadsRemaining: inserted.rows[0].downloads_remaining });
-  } catch (err) {
-    console.error('users/init error:', err.message);
-    res.status(500).json({ error: 'Could not initialize user' });
-  }
-});
-
-// Kick off an M-Pesa STK push for KSh 500.
-router.post('/mpesa/stkpush', async (req, res) => {
-  try {
-    const { anonId, phone } = req.body;
-    if (!anonId || !phone) return res.status(400).json({ error: 'anonId and phone are required' });
-
-    const userResult = await pool.query('SELECT * FROM users WHERE anon_id = $1', [anonId]);
-    if (!userResult.rows.length) return res.status(404).json({ error: 'User not found' });
-    const user = userResult.rows[0];
+    const { phone } = req.body;
+    if (!phone) return res.status(400).json({ error: 'Phone number is required' });
 
     const callbackUrl = `${process.env.CALLBACK_BASE_URL}/api/mpesa/callback`;
 
     const darajaRes = await stkPush({
       phone,
       amount: DOWNLOAD_PRICE,
-      accountReference: `JengaCV-${user.id}`,
+      accountReference: `JengaCV-${req.userId}`,
       transactionDesc: '3 CV downloads',
       callbackUrl,
     });
@@ -51,7 +27,7 @@ router.post('/mpesa/stkpush', async (req, res) => {
     await pool.query(
       `INSERT INTO payments (user_id, provider, checkout_request_id, merchant_request_id, amount, phone_number, status)
        VALUES ($1, 'mpesa', $2, $3, $4, $5, 'pending')`,
-      [user.id, darajaRes.CheckoutRequestID, darajaRes.MerchantRequestID, DOWNLOAD_PRICE, phone]
+      [req.userId, darajaRes.CheckoutRequestID, darajaRes.MerchantRequestID, DOWNLOAD_PRICE, phone]
     );
 
     res.json({ checkoutRequestId: darajaRes.CheckoutRequestID });
@@ -62,7 +38,8 @@ router.post('/mpesa/stkpush', async (req, res) => {
 });
 
 // Safaricom calls this after the user enters their PIN (or cancels/times out).
-// This is the ONLY place credits are ever granted — never trust the frontend.
+// This is the ONLY place M-Pesa credits are ever granted — never trust the frontend.
+// Not behind requireAuth: Safaricom is the caller here, not a logged-in browser.
 router.post('/mpesa/callback', async (req, res) => {
   try {
     const callback = req.body?.Body?.stkCallback;
@@ -108,24 +85,19 @@ router.post('/mpesa/callback', async (req, res) => {
 
 // ---------------- Card payments (Pesapal) ----------------
 
-// Start a hosted checkout order. Returns a redirect_url the frontend opens
-// in a new tab; the user pays there, Pesapal never touches our server with
-// card details directly.
-router.post('/pesapal/initiate', async (req, res) => {
+// Start a hosted checkout order for the logged-in user. Returns a
+// redirect_url the frontend opens in a new tab; the user pays there,
+// Pesapal never touches our server with card details directly.
+router.post('/pesapal/initiate', requireAuth, async (req, res) => {
   try {
-    const { anonId, email, phone } = req.body;
-    if (!anonId) return res.status(400).json({ error: 'anonId is required' });
+    const { email, phone } = req.body;
     if (!email && !phone) return res.status(400).json({ error: 'email or phone is required' });
-
-    const userResult = await pool.query('SELECT * FROM users WHERE anon_id = $1', [anonId]);
-    if (!userResult.rows.length) return res.status(404).json({ error: 'User not found' });
-    const user = userResult.rows[0];
 
     // Create the payment row first so we have a merchant reference to hand to Pesapal.
     const paymentInsert = await pool.query(
       `INSERT INTO payments (user_id, provider, amount, phone_number, status)
        VALUES ($1, 'card', $2, $3, 'pending') RETURNING id`,
-      [user.id, DOWNLOAD_PRICE, phone || null]
+      [req.userId, DOWNLOAD_PRICE, phone || null]
     );
     const paymentId = paymentInsert.rows[0].id;
 
@@ -190,7 +162,8 @@ async function reconcilePesapalPayment(orderTrackingId) {
 }
 
 // Pesapal's server-to-server notification. This — not the browser redirect
-// below — is the authoritative confirmation.
+// below — is the authoritative confirmation. Not behind requireAuth: Pesapal
+// is the caller here, not a logged-in browser.
 router.get('/pesapal/ipn', async (req, res) => {
   const { OrderTrackingId, OrderNotificationType, OrderMerchantReference } = req.query;
   try {
@@ -211,7 +184,9 @@ router.get('/pesapal/ipn', async (req, res) => {
 
 // Called by pesapal-callback.html right after the browser redirects back
 // from checkout — a fast-path in case the IPN hasn't landed yet. Safe to
-// call repeatedly; reconcilePesapalPayment() only credits once.
+// call repeatedly; reconcilePesapalPayment() only credits once. Not behind
+// requireAuth: this page loads in a fresh tab Pesapal controls, and the
+// orderTrackingId itself is the effective credential here.
 router.get('/pesapal/confirm/:orderTrackingId', async (req, res) => {
   try {
     const payment = await reconcilePesapalPayment(req.params.orderTrackingId);
@@ -224,11 +199,13 @@ router.get('/pesapal/confirm/:orderTrackingId', async (req, res) => {
   }
 });
 
-
-router.get('/payments/status/:checkoutRequestId', async (req, res) => {
+// Frontend polls this while waiting for payment confirmation (either M-Pesa
+// PIN entry or the Pesapal checkout tab). Requires auth, and only returns
+// status for a payment that actually belongs to the logged-in user.
+router.get('/payments/status/:checkoutRequestId', requireAuth, async (req, res) => {
   try {
     const initial = await pool.query(
-      `SELECT p.id, p.provider, p.status, u.downloads_remaining FROM payments p
+      `SELECT p.id, p.user_id, p.provider, p.status, u.downloads_remaining FROM payments p
        JOIN users u ON u.id = p.user_id
        WHERE p.checkout_request_id = $1`,
       [req.params.checkoutRequestId]
@@ -236,6 +213,9 @@ router.get('/payments/status/:checkoutRequestId', async (req, res) => {
     if (!initial.rows.length) return res.status(404).json({ error: 'Payment not found' });
 
     let row = initial.rows[0];
+    if (row.user_id !== req.userId) {
+      return res.status(403).json({ error: 'This payment does not belong to your account' });
+    }
 
     // M-Pesa is confirmed purely by the callback webhook — nothing to do here.
     // Card payments can be safely re-checked against Pesapal on every poll,
@@ -258,21 +238,19 @@ router.get('/payments/status/:checkoutRequestId', async (req, res) => {
   }
 });
 
-// Consumes one download credit. Called right before the frontend triggers window.print().
-router.post('/downloads/consume', async (req, res) => {
+// Consumes one download credit for the logged-in user. Called right before
+// the frontend triggers window.print().
+router.post('/downloads/consume', requireAuth, async (req, res) => {
   const client = await pool.connect();
   try {
-    const { anonId } = req.body;
-    if (!anonId) return res.status(400).json({ error: 'anonId is required' });
-
     await client.query('BEGIN');
     const userResult = await client.query(
-      'SELECT * FROM users WHERE anon_id = $1 FOR UPDATE',
-      [anonId]
+      'SELECT * FROM users WHERE id = $1 FOR UPDATE',
+      [req.userId]
     );
     if (!userResult.rows.length) {
       await client.query('ROLLBACK');
-      return res.status(404).json({ error: 'User not found' });
+      return res.status(404).json({ error: 'Account not found' });
     }
     const user = userResult.rows[0];
     if (user.downloads_remaining <= 0) {

@@ -134,6 +134,36 @@ dashboard, and has a free tier to test on before you're paying anything.
 
 ---
 
+## Update: real accounts + CV background patterns
+
+Two changes since the initial deployment:
+
+**Real accounts replace the anonymous-ID system.** Users now register with
+name/email/password before they can access the builder — this is enforced
+by an auth gate on the frontend and `requireAuth` middleware on every
+credit-related API route. Sessions are JWTs stored in the browser
+(`jengacv_token` in localStorage) and sent as `Authorization: Bearer <token>`
+on each request. Passwords are hashed with bcrypt; the server never stores
+or logs a plaintext password.
+
+**If you're updating an existing deployment** (not a fresh install), you
+must do two things after pulling this update:
+1. **Re-run `server/schema.sql`** against your database — it's written to be
+   safe to re-run, and adds the new `email`/`password_hash`/`name` columns.
+2. **Add a `JWT_SECRET` environment variable** if it isn't already set. The
+   updated `render.yaml` has Render auto-generate one (`generateValue: true`),
+   but Render only applies new Blueprint fields on a **Manual Sync** — go to
+   your Blueprint page and click **Manual Sync**, or add `JWT_SECRET`
+   yourself under the web service's Environment tab with any long random
+   string. Without this, sessions won't survive a server restart.
+
+**Background patterns.** The CV preview/download now has a "Background"
+selector next to the template and accent-color controls — Plain, Dots,
+Diagonal lines, Grid, or Corner glow. These render as a low-opacity layer
+behind the resume content (tinted with the selected accent color) so they
+stay decorative without hurting text readability, and they appear on the
+downloaded PDF the same as the on-screen preview.
+
 ## Notes on what's stubbed vs. real
 
 - **M-Pesa**: fully wired — real STK Push, real webhook, real credit
