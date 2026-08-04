@@ -16,6 +16,10 @@ services:
         sync: false
       - key: JWT_SECRET
         generateValue: true
+      - key: RESEND_API_KEY
+        sync: false
+      - key: EMAIL_FROM
+        value: "JengaCV <onboarding@resend.dev>"
       - key: DARAJA_SHORTCODE
         value: "174379"
       - key: DARAJA_PASSKEY

@@ -164,6 +164,47 @@ behind the resume content (tinted with the selected accent color) so they
 stay decorative without hurting text readability, and they appear on the
 downloaded PDF the same as the on-screen preview.
 
+## Update: password reset + promotional emails
+
+Two new capabilities, both requiring email sending, which the app didn't
+have before:
+
+**Get a Resend API key first.** Go to https://resend.com, sign up (free
+tier is generous — plenty for this), and grab an API key from the
+dashboard. For testing, you can send from `onboarding@resend.dev`
+immediately with no setup; for real use later, verify your own domain in
+Resend and update `EMAIL_FROM` accordingly.
+
+**If you're updating an existing deployment:**
+1. Add `RESEND_API_KEY` to your Render environment (Environment tab → Edit)
+2. `EMAIL_FROM` is optional — defaults to the Resend test address if unset
+3. Re-run `server/schema.sql` — it now adds a `marketing_opt_in` column to
+   `users` and a new `password_resets` table. Safe to re-run.
+4. Without `RESEND_API_KEY` set, the app doesn't crash — it logs a warning
+   and skips sending, so registration/login still work, but reset links and
+   promo emails won't actually arrive until this is configured.
+
+**Password reset.** A "Forgot password?" link on the login screen emails a
+one-time link (`/reset-password.html?token=...`) valid for 1 hour. The
+token itself is never stored in the database — only its SHA-256 hash — so
+a database leak alone can't be used to reset anyone's password. Requesting
+a reset always returns the same generic response whether or not the email
+is registered, so this can't be used to check who has an account.
+
+**Marketing opt-in.** A checkbox appears at registration ("Send me
+occasional tips and promotions"), and any logged-in user can change their
+mind anytime — click their name in the top bar to open Account settings.
+
+**Sending promotional emails.** There's no admin dashboard for this —
+instead, a simple script:
+```
+cd server
+npm run promo -- "Your subject line" "Your message body text"
+```
+This emails everyone who's currently opted in. Run it locally (pointed at
+your production `DATABASE_URL` and `RESEND_API_KEY` in your `.env`) or
+directly on Render via the Shell tab under your web service.
+
 ## Notes on what's stubbed vs. real
 
 - **M-Pesa**: fully wired — real STK Push, real webhook, real credit

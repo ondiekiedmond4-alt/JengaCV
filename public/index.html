@@ -44,6 +44,12 @@
   .auth-note{font-size:11.5px;color:var(--muted);text-align:center;line-height:1.5;margin:16px 0 0;}
   #authError .demo-note{background:#fbeceb;color:var(--danger);margin-top:12px;margin-bottom:0;}
   #authError:empty{display:none;}
+  .checkbox-row{display:flex;align-items:flex-start;gap:8px;font-size:12.5px;color:var(--muted);margin:14px 0 0;cursor:pointer;line-height:1.4;}
+  .checkbox-row input{margin-top:2px;flex-shrink:0;}
+  .forgot-link{display:block;text-align:right;font-size:12.5px;color:var(--green);text-decoration:none;margin-top:-6px;margin-bottom:2px;}
+  .forgot-link:hover{text-decoration:underline;}
+  #userNameText{cursor:pointer;}
+  #userNameText:hover{text-decoration:underline;}
 
   /* ---------- Background pattern controls ---------- */
   .control-row{display:flex;align-items:center;gap:12px;margin-bottom:18px;}
@@ -109,6 +115,8 @@
   .entry-card .remove-btn{position:absolute;top:10px;right:10px;background:none;border:none;color:var(--danger);font-size:12px;font-weight:600;cursor:pointer;font-family:'IBM Plex Mono',monospace;}
   .add-btn{display:inline-flex;align-items:center;gap:6px;background:none;border:1.5px dashed var(--muted);color:var(--ink);border-radius:8px;padding:9px 14px;font-size:13px;font-weight:600;cursor:pointer;width:100%;justify-content:center;}
   .add-btn:hover{border-color:var(--accent);color:var(--accent);}
+  .substep-label{font-weight:700;font-size:14px;margin:0 0 12px;color:var(--ink);display:flex;align-items:center;gap:8px;}
+  .substep-label svg{width:16px;height:16px;color:var(--accent);flex-shrink:0;}
 
   .nav-row{display:flex;justify-content:space-between;margin-top:24px;}
   .btn{border:none;border-radius:8px;padding:11px 20px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;}
@@ -206,7 +214,7 @@
 
 <div class="topbar">
   <div class="brand">
-    <h1>JengaCV</h1>
+    <h1><a href="/" style="color:inherit;text-decoration:none;">JengaCV</a></h1>
     <span class="tag">BUILD · PREVIEW · DOWNLOAD</span>
   </div>
   <div style="display:flex;align-items:center;gap:12px;">
@@ -284,8 +292,12 @@ const ICONS = {
   pin: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>`,
   link: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>`,
   camera: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3Z"/><circle cx="12" cy="13" r="4"/></svg>`,
+  plus: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>`,
+  folder: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h6l2 3h8a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1Z"/></svg>`,
+  heart: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 1 0-7.8 7.8l1 1L12 21l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.8Z"/></svg>`,
+  users: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="7" r="3"/><path d="M2 21v-1a5 5 0 0 1 5-5h4a5 5 0 0 1 5 5v1"/><circle cx="17" cy="7" r="2.2"/><path d="M17.5 13a4 4 0 0 1 4 4v1h-2"/></svg>`,
 };
-const STEP_ICONS = ['user','fileText','briefcase','cap','award'];
+const STEP_ICONS = ['user','fileText','briefcase','cap','award','plus'];
 
 /* ---------------- STATE ---------------- */
 const state = {
@@ -299,14 +311,23 @@ const state = {
   education: [ mkEducation() ],
   skills: '',
   certifications: [ mkCert() ],
+  projects: [ mkProject() ],
+  volunteer: [ mkVolunteer() ],
+  hobbies: '',
+  referencesMode: 'list',
+  referencesNote: 'References available upon request.',
+  references: [ mkReference() ],
   downloadsRemaining: 0
 };
 
 function mkExperience(){ return { title:'', company:'', location:'', start:'', end:'', achievements:'' }; }
 function mkEducation(){ return { degree:'', institution:'', location:'', start:'', end:'', grade:'' }; }
 function mkCert(){ return { name:'', issuer:'', date:'' }; }
+function mkProject(){ return { name:'', description:'', link:'' }; }
+function mkVolunteer(){ return { role:'', organization:'', start:'', end:'', description:'' }; }
+function mkReference(){ return { name:'', title:'', phone:'', email:'' }; }
 
-const STEPS = ['Personal Details','Professional Summary','Work Experience','Education','Skills & Certifications'];
+const STEPS = ['Personal Details','Professional Summary','Work Experience','Education','Skills & Certifications','Additional Sections'];
 const TEMPLATES = [ {id:'modern',label:'Modern'}, {id:'classic',label:'Classic (ATS)'}, {id:'minimal',label:'Minimalist'} ];
 const ACCENTS = ['#1f6f5c','#1c2333','#a4383a','#2a5599','#c89b3c'];
 const PATTERNS = [ {id:'none',label:'Plain'}, {id:'dots',label:'Dots'}, {id:'lines',label:'Diagonal lines'}, {id:'grid',label:'Grid'}, {id:'corner',label:'Corner glow'} ];
@@ -428,6 +449,60 @@ function renderStep(){
       </div>`;
   }
 
+  else if(state.step === 5){
+    const showReferenceList = state.referencesMode === 'list';
+    body = `
+      <div class="substep-label">${ICONS.folder}Projects <span class="hint">optional</span></div>
+      ${state.projects.map((p,i)=>`
+        <div class="entry-card">
+          ${state.projects.length>1?`<button class="remove-btn" data-remove="projects.${i}">REMOVE</button>`:''}
+          <div class="field"><label>Project name</label><input type="text" data-field="projects.${i}.name" value="${esc(p.name)}" placeholder="Marketplace Payments Module"></div>
+          <div class="field"><label>Description</label><textarea data-field="projects.${i}.description" rows="2" placeholder="Built the M-Pesa checkout flow used by 500+ sellers">${esc(p.description)}</textarea></div>
+          <div class="field"><label>Link <span class="hint">optional</span></label><input type="text" data-field="projects.${i}.link" value="${esc(p.link)}" placeholder="github.com/you/project"></div>
+        </div>`).join('')}
+      <button class="add-btn" id="addProject">+ Add another project</button>
+
+      <div class="substep-label" style="margin-top:26px;">${ICONS.award}Volunteer Work <span class="hint">optional</span></div>
+      ${state.volunteer.map((v,i)=>`
+        <div class="entry-card">
+          ${state.volunteer.length>1?`<button class="remove-btn" data-remove="volunteer.${i}">REMOVE</button>`:''}
+          <div class="row2">
+            <div class="field"><label>Role</label><input type="text" data-field="volunteer.${i}.role" value="${esc(v.role)}" placeholder="Mentor"></div>
+            <div class="field"><label>Organization</label><input type="text" data-field="volunteer.${i}.organization" value="${esc(v.organization)}" placeholder="Kenya Red Cross"></div>
+          </div>
+          <div class="row2">
+            <div class="field"><label>Start</label><input type="text" data-field="volunteer.${i}.start" value="${esc(v.start)}" placeholder="2023"></div>
+            <div class="field"><label>End</label><input type="text" data-field="volunteer.${i}.end" value="${esc(v.end)}" placeholder="Present"></div>
+          </div>
+          <div class="field"><label>Description <span class="hint">optional</span></label><textarea data-field="volunteer.${i}.description" rows="2" placeholder="Coached 10 students through basic coding fundamentals">${esc(v.description)}</textarea></div>
+        </div>`).join('')}
+      <button class="add-btn" id="addVolunteer">+ Add another role</button>
+
+      <div class="substep-label" style="margin-top:26px;">${ICONS.heart}Hobbies & Interests <span class="hint">optional, comma-separated</span></div>
+      <div class="field"><textarea data-field="hobbies" rows="2" placeholder="Football, chess, reading personal finance blogs">${esc(state.hobbies)}</textarea></div>
+
+      <div class="substep-label" style="margin-top:26px;">${ICONS.users}References <span class="hint">optional</span></div>
+      <label class="checkbox-row" style="margin:0 0 14px;">
+        <input type="checkbox" id="referencesModeToggle" ${!showReferenceList?'checked':''}>
+        Just include "References available upon request" instead of listing contacts
+      </label>
+      ${!showReferenceList ? `
+        <div class="field"><input type="text" data-field="referencesNote" value="${esc(state.referencesNote)}"></div>
+      ` : state.references.map((r,i)=>`
+        <div class="entry-card">
+          ${state.references.length>1?`<button class="remove-btn" data-remove="references.${i}">REMOVE</button>`:''}
+          <div class="row2">
+            <div class="field"><label>Name</label><input type="text" data-field="references.${i}.name" value="${esc(r.name)}" placeholder="Jane Muthoni"></div>
+            <div class="field"><label>Title / Relationship</label><input type="text" data-field="references.${i}.title" value="${esc(r.title)}" placeholder="Former Manager, JetBlue Contract"></div>
+          </div>
+          <div class="row2">
+            <div class="field"><label>Phone</label><input type="text" data-field="references.${i}.phone" value="${esc(r.phone)}" placeholder="+254 7XX XXX XXX"></div>
+            <div class="field"><label>Email</label><input type="text" data-field="references.${i}.email" value="${esc(r.email)}" placeholder="jane@email.com"></div>
+          </div>
+        </div>`).join('') + `<button class="add-btn" id="addReference">+ Add another reference</button>`}
+    `;
+  }
+
   el.innerHTML = label + body;
 
   el.querySelectorAll('[data-field]').forEach(input=>{
@@ -449,6 +524,18 @@ function renderStep(){
   if(addEdu) addEdu.addEventListener('click', ()=>{ state.education.push(mkEducation()); renderStep(); });
   const addCert = document.getElementById('addCert');
   if(addCert) addCert.addEventListener('click', ()=>{ state.certifications.push(mkCert()); renderStep(); });
+
+  const addProject = document.getElementById('addProject');
+  if(addProject) addProject.addEventListener('click', ()=>{ state.projects.push(mkProject()); renderStep(); });
+  const addVolunteer = document.getElementById('addVolunteer');
+  if(addVolunteer) addVolunteer.addEventListener('click', ()=>{ state.volunteer.push(mkVolunteer()); renderStep(); });
+  const addReference = document.getElementById('addReference');
+  if(addReference) addReference.addEventListener('click', ()=>{ state.references.push(mkReference()); renderStep(); });
+  const referencesModeToggle = document.getElementById('referencesModeToggle');
+  if(referencesModeToggle) referencesModeToggle.addEventListener('change', e=>{
+    state.referencesMode = e.target.checked ? 'note' : 'list';
+    renderStep(); renderPreview();
+  });
 
   const photoInput = document.getElementById('photoInput');
   if(photoInput) photoInput.addEventListener('change', e=>{
@@ -506,6 +593,28 @@ function renderPreview(){
       <div class="r-item-sub">${esc(c.issuer)}</div>
     </div>`).join('');
 
+  const projHtml = state.projects.filter(pr=>pr.name).map(pr=>`
+    <div class="r-item">
+      <div class="r-item-head"><span>${esc(pr.name)}</span>${pr.link?`<span style="font-weight:400;font-size:11px;color:var(--muted)">${esc(pr.link)}</span>`:''}</div>
+      ${pr.description?`<div style="font-size:13px;line-height:1.55;margin-top:3px;">${esc(pr.description)}</div>`:''}
+    </div>`).join('');
+
+  const volHtml = state.volunteer.filter(v=>v.role||v.organization).map(v=>`
+    <div class="r-item">
+      <div class="r-item-head"><span>${esc(v.role)||'Role'}${v.organization?' · '+esc(v.organization):''}</span><span>${esc(v.start)} – ${esc(v.end)}</span></div>
+      ${v.description?`<div style="font-size:13px;line-height:1.55;margin-top:3px;">${esc(v.description)}</div>`:''}
+    </div>`).join('');
+
+  const hobbiesArr = state.hobbies.split(',').map(s=>s.trim()).filter(Boolean);
+
+  const refHtml = state.referencesMode === 'note'
+    ? (state.referencesNote.trim() ? `<div style="font-size:13px;">${esc(state.referencesNote)}</div>` : '')
+    : state.references.filter(r=>r.name).map(r=>`
+      <div class="r-item">
+        <div class="r-item-head"><span>${esc(r.name)}</span>${r.title?`<span style="font-weight:400;font-size:11px;color:var(--muted)">${esc(r.title)}</span>`:''}</div>
+        <div class="r-item-sub">${[r.phone,r.email].filter(Boolean).map(esc).join(' · ')}</div>
+      </div>`).join('');
+
   const contactParts = [];
   if(p.email) contactParts.push(`<span class="r-contact-icon">${ICONS.mail}${esc(p.email)}</span>`);
   if(p.phone) contactParts.push(`<span class="r-contact-icon">${ICONS.phone}${esc(p.phone)}</span>`);
@@ -530,6 +639,10 @@ function renderPreview(){
     ${eduHtml ? `<div class="r-section-title">${ICONS.cap}Education</div>${eduHtml}` : ''}
     ${skillsArr.length ? `<div class="r-section-title">${ICONS.award}Skills</div><div class="r-skills">${skillsArr.map(s=>`<span class="r-skill-pill">${esc(s)}</span>`).join('')}</div>` : ''}
     ${certHtml ? `<div class="r-section-title">${ICONS.award}Certifications</div>${certHtml}` : ''}
+    ${projHtml ? `<div class="r-section-title">${ICONS.folder}Projects</div>${projHtml}` : ''}
+    ${volHtml ? `<div class="r-section-title">${ICONS.award}Volunteer Work</div>${volHtml}` : ''}
+    ${hobbiesArr.length ? `<div class="r-section-title">${ICONS.heart}Hobbies & Interests</div><div class="r-skills">${hobbiesArr.map(h=>`<span class="r-skill-pill">${esc(h)}</span>`).join('')}</div>` : ''}
+    ${refHtml ? `<div class="r-section-title">${ICONS.users}References</div>${refHtml}` : ''}
   `;
 
   document.getElementById('printArea').className = 'paper tpl-' + state.template;
@@ -577,6 +690,7 @@ async function checkAuth(){
 
 function onAuthenticated(data){
   state.downloadsRemaining = data.downloadsRemaining || 0;
+  currentUser = { name: data.name, email: data.email, marketingOptIn: !!data.marketingOptIn };
   document.getElementById('authGate').style.display = 'none';
   document.getElementById('mainLayout').style.display = '';
   document.getElementById('creditsPill').style.display = '';
@@ -590,8 +704,14 @@ function showAuthGate(){
   document.getElementById('mainLayout').style.display = 'none';
   document.getElementById('creditsPill').style.display = 'none';
   document.getElementById('userPill').style.display = 'none';
+  authMode = 'login';
+  document.querySelectorAll('#authTabs button').forEach(x=>x.classList.toggle('active', x.dataset.a==='login'));
+  document.getElementById('authTabs').style.display = 'flex';
+  document.getElementById('authSubmit').style.display = '';
+  renderAuthFields();
 }
 
+let currentUser = null;
 let authMode = 'login';
 function renderAuthFields(){
   const box = document.getElementById('authFields');
@@ -600,14 +720,29 @@ function renderAuthFields(){
     box.innerHTML = `
       <div class="field"><label>Full name</label><input type="text" id="authName" placeholder="Wanjiru Kamau"></div>
       <div class="field"><label>Email</label><input type="email" id="authEmail" placeholder="you@email.com"></div>
-      <div class="field"><label>Password <span class="hint">min. 6 characters</span></label><input type="password" id="authPassword" placeholder="••••••••"></div>`;
+      <div class="field"><label>Password <span class="hint">min. 6 characters</span></label><input type="password" id="authPassword" placeholder="••••••••"></div>
+      <label class="checkbox-row"><input type="checkbox" id="authMarketing"> Send me occasional tips and promotions from JengaCV</label>`;
     document.getElementById('authSubmit').textContent = 'Create account';
+  } else if(authMode === 'forgot'){
+    box.innerHTML = `
+      <div class="field"><label>Email</label><input type="email" id="authEmail" placeholder="you@email.com"></div>
+      <p class="auth-note" style="margin:0 0 4px;">We'll email you a link to set a new password.</p>`;
+    document.getElementById('authSubmit').textContent = 'Send reset link';
   } else {
     box.innerHTML = `
       <div class="field"><label>Email</label><input type="email" id="authEmail" placeholder="you@email.com"></div>
-      <div class="field"><label>Password</label><input type="password" id="authPassword" placeholder="••••••••"></div>`;
+      <div class="field"><label>Password</label><input type="password" id="authPassword" placeholder="••••••••"></div>
+      <a href="#" id="forgotPasswordLink" class="forgot-link">Forgot password?</a>`;
     document.getElementById('authSubmit').textContent = 'Log in';
   }
+
+  const forgotLink = document.getElementById('forgotPasswordLink');
+  if(forgotLink) forgotLink.addEventListener('click', (e)=>{
+    e.preventDefault();
+    authMode = 'forgot';
+    document.getElementById('authTabs').style.display = 'none';
+    renderAuthFields();
+  });
 }
 renderAuthFields();
 
@@ -623,10 +758,31 @@ document.getElementById('authTabs').querySelectorAll('button').forEach(b=>{
 document.getElementById('authSubmit').addEventListener('click', async (e)=>{
   const btn = e.target;
   const email = (document.getElementById('authEmail').value || '').trim();
-  const password = document.getElementById('authPassword').value || '';
-  const name = authMode === 'register' ? (document.getElementById('authName').value || '').trim() : null;
   const errBox = document.getElementById('authError');
   errBox.innerHTML = '';
+
+  if(authMode === 'forgot'){
+    if(!email){ errBox.innerHTML = `<div class="demo-note">Please enter your email.</div>`; return; }
+    btn.disabled = true;
+    const originalText = btn.textContent;
+    btn.innerHTML = `<span class="spinner"></span> Sending…`;
+    try{
+      const res = await fetch('/api/auth/forgot-password', {
+        method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ email })
+      });
+      const data = await res.json();
+      document.getElementById('authFields').innerHTML = `<div class="msg success" style="background:#eaf3f0;color:var(--green-dark);border-radius:8px;padding:10px 12px;font-size:13px;">${data.message || 'If an account exists for that email, a reset link has been sent.'}</div>`;
+      btn.style.display = 'none';
+    } catch(err){
+      errBox.innerHTML = `<div class="demo-note">Network error — please check your connection and try again.</div>`;
+    }
+    btn.disabled = false; btn.textContent = originalText;
+    return;
+  }
+
+  const password = document.getElementById('authPassword').value || '';
+  const name = authMode === 'register' ? (document.getElementById('authName').value || '').trim() : null;
+  const marketingOptIn = authMode === 'register' ? !!document.getElementById('authMarketing')?.checked : undefined;
 
   if(!email || !password || (authMode === 'register' && !name)){
     errBox.innerHTML = `<div class="demo-note">Please fill in all fields.</div>`;
@@ -639,7 +795,7 @@ document.getElementById('authSubmit').addEventListener('click', async (e)=>{
 
   try{
     const endpoint = authMode === 'register' ? '/api/auth/register' : '/api/auth/login';
-    const payload = authMode === 'register' ? { name, email, password } : { email, password };
+    const payload = authMode === 'register' ? { name, email, password, marketingOptIn } : { email, password };
     const res = await fetch(endpoint, {
       method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)
     });
@@ -658,6 +814,55 @@ document.getElementById('authSubmit').addEventListener('click', async (e)=>{
   }
   btn.disabled = false; btn.textContent = originalText;
 });
+
+document.getElementById('userNameText').addEventListener('click', openAccountModal);
+
+function openAccountModal(){
+  const root = document.getElementById('modalRoot');
+  root.innerHTML = `
+    <div class="modal-overlay">
+      <div class="modal">
+        <button class="modal-close" id="closeAccountModal">✕</button>
+        <h3>Account settings</h3>
+        <div class="modal-sub">${currentUser ? currentUser.email : ''}</div>
+        <label class="checkbox-row" style="margin-top:18px;">
+          <input type="checkbox" id="marketingToggle" ${currentUser?.marketingOptIn ? 'checked' : ''}>
+          Send me occasional tips and promotions from JengaCV
+        </label>
+        <div id="accountMsg"></div>
+        <div class="modal-actions">
+          <button class="btn btn-ghost" id="closeAccountModal2">Close</button>
+          <button class="btn btn-accent" id="saveAccountBtn">Save</button>
+        </div>
+      </div>
+    </div>`;
+  const close = ()=>{ root.innerHTML=''; };
+  document.getElementById('closeAccountModal').addEventListener('click', close);
+  document.getElementById('closeAccountModal2').addEventListener('click', close);
+  document.getElementById('saveAccountBtn').addEventListener('click', async (e)=>{
+    const btn = e.target;
+    const optIn = document.getElementById('marketingToggle').checked;
+    btn.disabled = true;
+    btn.innerHTML = `<span class="spinner"></span> Saving…`;
+    try{
+      const res = await fetch('/api/auth/marketing-preference', {
+        method:'PATCH', headers: authHeaders({'Content-Type':'application/json'}),
+        body: JSON.stringify({ optIn })
+      });
+      const data = await res.json();
+      if(!res.ok){
+        document.getElementById('accountMsg').innerHTML = `<div class="demo-note">${data.error || 'Could not save. Please try again.'}</div>`;
+        btn.disabled = false; btn.textContent = 'Save';
+        return;
+      }
+      if(currentUser) currentUser.marketingOptIn = data.marketingOptIn;
+      document.getElementById('accountMsg').innerHTML = `<div class="msg success" style="background:#eaf3f0;color:var(--green-dark);border-radius:8px;padding:8px 10px;font-size:12.5px;margin-top:10px;">Saved.</div>`;
+    } catch(err){
+      document.getElementById('accountMsg').innerHTML = `<div class="demo-note">Network error — please try again.</div>`;
+    }
+    btn.disabled = false; btn.textContent = 'Save';
+  });
+}
 
 document.getElementById('logoutBtn').addEventListener('click', ()=>{
   clearToken();
@@ -697,19 +902,14 @@ async function doDownload(){
 
 function openPaymentModal(){
   const root = document.getElementById('modalRoot');
-  let method = 'mpesa';
   root.innerHTML = `
     <div class="modal-overlay">
       <div class="modal">
         <button class="modal-close" id="closeModal">✕</button>
         <h3>Unlock 3 downloads</h3>
         <div class="modal-sub">Building and previewing your CV is free. Pay once to download 3 PDF copies (including re-downloads after edits).</div>
-        <div class="pay-tabs">
-          <button data-m="mpesa" class="active">M-Pesa</button>
-          <button data-m="card">Card</button>
-        </div>
         <div class="price-box"><span>JengaCV — 3 downloads</span><span class="amt">KSh 500</span></div>
-        <div id="payFields"></div>
+        <div class="field"><label>M-Pesa phone number</label><input type="tel" id="mpesaPhone" placeholder="07XX XXX XXX"></div>
         <div id="payStatus"></div>
         <div class="modal-actions">
           <button class="btn btn-ghost" id="cancelPay">Cancel</button>
@@ -718,77 +918,26 @@ function openPaymentModal(){
       </div>
     </div>`;
 
-  function renderFields(){
-    const box = document.getElementById('payFields');
-    if(method==='mpesa'){
-      box.innerHTML = `<div class="field"><label>M-Pesa phone number</label><input type="tel" id="mpesaPhone" placeholder="07XX XXX XXX"></div>`;
-    } else {
-      box.innerHTML = `<div class="field"><label>Email <span class="hint">for your receipt</span></label><input type="email" id="cardEmail" placeholder="you@email.com"></div>
-        <div class="demo-note">You'll be taken to Pesapal's secure checkout in a new tab to enter your card details — JengaCV never sees your card number.</div>`;
-    }
-  }
-  renderFields();
-
-  root.querySelectorAll('.pay-tabs button').forEach(b=>b.addEventListener('click', ()=>{
-    method = b.dataset.m;
-    root.querySelectorAll('.pay-tabs button').forEach(x=>x.classList.remove('active'));
-    b.classList.add('active');
-    renderFields();
-    document.getElementById('payStatus').innerHTML = '';
-  }));
-
   document.getElementById('closeModal').addEventListener('click', closeModal);
   document.getElementById('cancelPay').addEventListener('click', closeModal);
   document.getElementById('confirmPay').addEventListener('click', async (e)=>{
     const btn = e.target;
-
-    if(method === 'mpesa'){
-      const phone = (document.getElementById('mpesaPhone').value || '').trim();
-      if(!phone){ document.getElementById('payStatus').innerHTML = `<div class="demo-note">Enter your M-Pesa phone number.</div>`; return; }
-
-      btn.disabled = true;
-      document.getElementById('cancelPay').disabled = true;
-      btn.innerHTML = `<span class="spinner"></span> Sending prompt to your phone…`;
-
-      try{
-        const res = await fetch('/api/mpesa/stkpush', {
-          method:'POST', headers: authHeaders({'Content-Type':'application/json'}),
-          body: JSON.stringify({ phone })
-        });
-        const data = await res.json();
-        if(!res.ok){ showError(data.error || 'Could not start payment.'); return; }
-        btn.innerHTML = `<span class="spinner"></span> Waiting for M-Pesa PIN…`;
-        pollPaymentStatus(data.checkoutRequestId);
-      } catch(err){
-        showError('Network error while starting payment.');
-      }
-      return;
-    }
-
-    // Card via Pesapal hosted checkout
-    const email = (document.getElementById('cardEmail').value || '').trim();
-    if(!email){ document.getElementById('payStatus').innerHTML = `<div class="demo-note">Enter your email to continue to checkout.</div>`; return; }
+    const phone = (document.getElementById('mpesaPhone').value || '').trim();
+    if(!phone){ document.getElementById('payStatus').innerHTML = `<div class="demo-note">Enter your M-Pesa phone number.</div>`; return; }
 
     btn.disabled = true;
     document.getElementById('cancelPay').disabled = true;
-    btn.innerHTML = `<span class="spinner"></span> Opening secure checkout…`;
+    btn.innerHTML = `<span class="spinner"></span> Sending prompt to your phone…`;
 
     try{
-      const res = await fetch('/api/pesapal/initiate', {
+      const res = await fetch('/api/mpesa/stkpush', {
         method:'POST', headers: authHeaders({'Content-Type':'application/json'}),
-        body: JSON.stringify({ email })
+        body: JSON.stringify({ phone })
       });
       const data = await res.json();
-      if(!res.ok){ showError(data.error || 'Could not start card payment.'); return; }
-
-      const checkoutWindow = window.open(data.redirectUrl, '_blank');
-      if(!checkoutWindow){
-        showError('Your browser blocked the checkout popup. Please allow popups for this site and try again.');
-        return;
-      }
-      document.getElementById('payStatus').innerHTML = `<div class="demo-note">Complete your card payment in the new tab. This page will update automatically once it's confirmed.</div>`;
-      btn.innerHTML = `<span class="spinner"></span> Waiting for payment…`;
-      pollPaymentStatus(data.orderTrackingId);
+      if(!res.ok){ showError(data.error || 'Could not start payment.'); return; }
+      btn.innerHTML = `<span class="spinner"></span> Waiting for M-Pesa PIN…`;
+      pollPaymentStatus(data.checkoutRequestId);
     } catch(err){
       showError('Network error while starting payment.');
     }
@@ -802,10 +951,10 @@ function openPaymentModal(){
     document.getElementById('cancelPay').disabled = false;
   }
 
-  // Generic poller — works for both the M-Pesa CheckoutRequestID and the
-  // Pesapal OrderTrackingId, since /api/payments/status handles both.
+  // Note: still keyed generically by reference so this keeps working
+  // unchanged whenever card payments (Pesapal) get re-enabled later.
   async function pollPaymentStatus(reference){
-    const maxAttempts = 60; // ~3 min at 3s intervals — card checkout takes longer than STK push
+    const maxAttempts = 20; // ~60s at 3s intervals — STK prompts typically resolve well within this
     let attempts = 0;
     const interval = setInterval(async ()=>{
       attempts++;
