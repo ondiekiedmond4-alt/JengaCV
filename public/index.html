@@ -1137,7 +1137,7 @@ function openReferralModal(){
       <div class="modal">
         <button class="modal-close" id="closeReferral">✕</button>
         <h3>Refer & Earn</h3>
-        <div class="modal-sub">Share your link. When someone you referred makes their first payment, you earn KSh <span id="referralRewardAmt">75</span> plus a free download credit.</div>
+        <div class="modal-sub">Share your link. When someone you referred pays for their first download, you earn a free download credit.</div>
         <div class="field" style="margin-top:16px;">
           <label>Your referral link</label>
           <div style="display:flex;gap:8px;">
@@ -1178,15 +1178,12 @@ async function loadReferralStats(){
     const res = await fetch('/api/referrals/stats', { headers: authHeaders() });
     const data = await res.json();
     if(!res.ok) return;
-    const rewardEl = document.getElementById('referralRewardAmt');
-    if(rewardEl) rewardEl.textContent = data.rewardPerReferralKes;
     const statsBox = document.getElementById('referralStats');
     if(statsBox){
       statsBox.innerHTML = `
         <div class="referral-stat-row">
           <div><div class="referral-stat-num">${data.referralCount}</div><div class="referral-stat-label">Friends referred</div></div>
-          <div><div class="referral-stat-num">KSh ${data.totalEarnedKes}</div><div class="referral-stat-label">Total earned</div></div>
-          <div><div class="referral-stat-num">KSh ${data.pendingKes}</div><div class="referral-stat-label">Pending payout</div></div>
+          <div><div class="referral-stat-num">${data.bonusCreditsEarned}</div><div class="referral-stat-label">Bonus downloads earned</div></div>
         </div>`;
     }
   } catch(err){
@@ -1394,7 +1391,7 @@ function openReferralPrompt(){
       <div class="modal">
         <button class="modal-close" id="closeReferPrompt">✕</button>
         <h3>Know someone job hunting?</h3>
-        <div class="modal-sub">Share your link with a friend. When they pay for their first download, you earn KSh 75 plus a free download credit.</div>
+        <div class="modal-sub">Share your link with a friend. When they pay for their first download, you earn a free download credit.</div>
         <a class="btn btn-accent" href="https://wa.me/?text=${whatsappText}" target="_blank" rel="noopener" style="width:100%;text-decoration:none;display:flex;justify-content:center;margin-top:10px;">Share on WhatsApp</a>
         <div class="modal-actions">
           <button class="btn btn-ghost" id="skipReferPrompt" style="width:100%;">Maybe later</button>

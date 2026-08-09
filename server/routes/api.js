@@ -9,19 +9,10 @@ const { sendEmail, buildResumeEmailHtml } = require('../email');
 const router = express.Router();
 const DOWNLOAD_PRICE = 500;
 const CREDITS_PER_PAYMENT = 2;
-// 15% of the KSh 500 sale price = KSh 75 per successful referral, plus an
-// instant bonus download credit (see the referral math discussion for why
-// this figure). Change this one constant to adjust the whole program.
-const REFERRAL_REWARD_PERCENT = 0.15;
-const REFERRAL_REWARD_KES = Math.round(DOWNLOAD_PRICE * REFERRAL_REWARD_PERCENT);
+// Referrers earn a free download credit when someone they referred pays
+// for the first time — no cash tracking, no manual payout needed.
 const REFERRAL_BONUS_CREDITS = 1;
 
-// Called after any successful payment. If the payer was referred by
-// someone AND this is their first-ever successful purchase, the referrer
-// earns a reward — logged to referral_earnings (for manual payout later)
-// plus an immediate bonus download credit. Guarded by referral_rewarded so
-// a referrer is only ever paid once per referred person, on their first
-// purchase, not every repeat purchase.
 // Emails the person's most recently autosaved CV to their account email.
 // Best-effort — a failure here should never break the payment flow.
 async function emailCvToOwner(userId) {
@@ -45,6 +36,10 @@ async function emailCvToOwner(userId) {
   }
 }
 
+// Called after any successful payment. If the payer was referred by
+// someone AND this is their first-ever successful purchase, the referrer
+// gets 1 bonus download credit. Guarded by referral_rewarded so a referrer
+// is only ever credited once per referred person, on their first purchase.
 async function rewardReferrerIfEligible(payerId) {
   try {
     const userResult = await pool.query(
@@ -55,10 +50,6 @@ async function rewardReferrerIfEligible(payerId) {
     const { referred_by: referredBy, referral_rewarded: alreadyRewarded } = userResult.rows[0];
     if (!referredBy || alreadyRewarded) return;
 
-    await pool.query(
-      'INSERT INTO referral_earnings (referrer_id, referred_id, reward_amount_kes) VALUES ($1, $2, $3)',
-      [referredBy, payerId, REFERRAL_REWARD_KES]
-    );
     await pool.query(
       'UPDATE users SET downloads_remaining = downloads_remaining + $1, updated_at = now() WHERE id = $2',
       [REFERRAL_BONUS_CREDITS, referredBy]
@@ -356,21 +347,16 @@ router.get('/referrals/stats', requireAuth, async (req, res) => {
     const userResult = await pool.query('SELECT referral_code FROM users WHERE id = $1', [req.userId]);
     if (!userResult.rows.length) return res.status(404).json({ error: 'Account not found.' });
 
-    const earningsResult = await pool.query(
-      `SELECT COUNT(*)::int AS referral_count,
-              COALESCE(SUM(reward_amount_kes), 0) AS total_earned_kes,
-              COALESCE(SUM(reward_amount_kes) FILTER (WHERE status = 'earned'), 0) AS pending_kes
-       FROM referral_earnings WHERE referrer_id = $1`,
+    const countResult = await pool.query(
+      `SELECT COUNT(*)::int AS referral_count FROM users WHERE referred_by = $1 AND referral_rewarded = true`,
       [req.userId]
     );
-    const stats = earningsResult.rows[0];
+    const referralCount = countResult.rows[0].referral_count;
 
     res.json({
       referralCode: userResult.rows[0].referral_code,
-      referralCount: stats.referral_count,
-      totalEarnedKes: Number(stats.total_earned_kes),
-      pendingKes: Number(stats.pending_kes),
-      rewardPerReferralKes: REFERRAL_REWARD_KES,
+      referralCount,
+      bonusCreditsEarned: referralCount * REFERRAL_BONUS_CREDITS,
     });
   } catch (err) {
     console.error('referrals/stats error:', err.message);

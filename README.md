@@ -205,6 +205,29 @@ This emails everyone who's currently opted in. Run it locally (pointed at
 your production `DATABASE_URL` and `RESEND_API_KEY` in your `.env`) or
 directly on Render via the Shell tab under your web service.
 
+## Update: referral program simplified to credit-only
+
+The referral program no longer tracks or pays out real KSh — it's purely a
+free download credit now, which is much simpler to run:
+
+- Every account still gets a unique referral code and shareable link
+- When someone they referred pays for their **first** download, the
+  referrer automatically gets **+1 bonus download credit** — instantly, no
+  manual step
+- No cash ledger, no manual M-Pesa payouts, no need for Safaricom's B2C
+  API — `server/scripts/pay-referrals.js` has been removed since there's
+  nothing left to pay out
+
+**What changed under the hood:** `rewardReferrerIfEligible()` in
+`server/routes/api.js` now only bumps `downloads_remaining` — the earlier
+`referral_earnings` INSERT is gone. The `referral_earnings` table itself
+is left in the schema (harmless, unused) rather than dropped, consistent
+with how earlier unused columns were handled — safer than a destructive
+migration for something that was never storing real production data.
+
+Adjust the reward amount via the `REFERRAL_BONUS_CREDITS` constant at the
+top of `server/routes/api.js` if you want to change it from 1 later.
+
 ## Update: referral program + new background patterns
 
 **Referral program.** Every account gets a unique 6-character referral
