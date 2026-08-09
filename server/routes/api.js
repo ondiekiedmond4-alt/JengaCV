@@ -3,10 +3,72 @@ const pool = require('../db');
 const { stkPush } = require('../daraja');
 const pesapal = require('../pesapal');
 const { requireAuth } = require('../auth');
+const { proofreadCv } = require('../ai');
+const { sendEmail, buildResumeEmailHtml } = require('../email');
 
 const router = express.Router();
 const DOWNLOAD_PRICE = 500;
-const CREDITS_PER_PAYMENT = 3;
+const CREDITS_PER_PAYMENT = 2;
+// 15% of the KSh 500 sale price = KSh 75 per successful referral, plus an
+// instant bonus download credit (see the referral math discussion for why
+// this figure). Change this one constant to adjust the whole program.
+const REFERRAL_REWARD_PERCENT = 0.15;
+const REFERRAL_REWARD_KES = Math.round(DOWNLOAD_PRICE * REFERRAL_REWARD_PERCENT);
+const REFERRAL_BONUS_CREDITS = 1;
+
+// Called after any successful payment. If the payer was referred by
+// someone AND this is their first-ever successful purchase, the referrer
+// earns a reward — logged to referral_earnings (for manual payout later)
+// plus an immediate bonus download credit. Guarded by referral_rewarded so
+// a referrer is only ever paid once per referred person, on their first
+// purchase, not every repeat purchase.
+// Emails the person's most recently autosaved CV to their account email.
+// Best-effort — a failure here should never break the payment flow.
+async function emailCvToOwner(userId) {
+  try {
+    const userResult = await pool.query('SELECT email, name FROM users WHERE id = $1', [userId]);
+    if (!userResult.rows.length || !userResult.rows[0].email) return;
+    const { email, name } = userResult.rows[0];
+
+    const cvResult = await pool.query('SELECT content FROM cvs WHERE user_id = $1', [userId]);
+    if (!cvResult.rows.length) return; // nothing autosaved yet to send
+
+    const html = buildResumeEmailHtml(cvResult.rows[0].content);
+    await sendEmail({
+      to: email,
+      subject: 'Your JengaCV — a copy for your records',
+      html: `<p>Hi ${name || 'there'},</p><p>Here's a copy of the CV you just downloaded, saved to your inbox for safekeeping:</p><hr style="border:none;border-top:1px solid #e2ddd0;margin:16px 0;">${html}`,
+      text: 'A copy of your CV is attached in this email as formatted HTML — open it in a browser-based email client to view it clearly.',
+    });
+  } catch (err) {
+    console.error('emailCvToOwner error:', err.response?.data || err.message);
+  }
+}
+
+async function rewardReferrerIfEligible(payerId) {
+  try {
+    const userResult = await pool.query(
+      'SELECT referred_by, referral_rewarded FROM users WHERE id = $1',
+      [payerId]
+    );
+    if (!userResult.rows.length) return;
+    const { referred_by: referredBy, referral_rewarded: alreadyRewarded } = userResult.rows[0];
+    if (!referredBy || alreadyRewarded) return;
+
+    await pool.query(
+      'INSERT INTO referral_earnings (referrer_id, referred_id, reward_amount_kes) VALUES ($1, $2, $3)',
+      [referredBy, payerId, REFERRAL_REWARD_KES]
+    );
+    await pool.query(
+      'UPDATE users SET downloads_remaining = downloads_remaining + $1, updated_at = now() WHERE id = $2',
+      [REFERRAL_BONUS_CREDITS, referredBy]
+    );
+    await pool.query('UPDATE users SET referral_rewarded = true WHERE id = $1', [payerId]);
+  } catch (err) {
+    // A referral-reward hiccup should never break the payment flow itself.
+    console.error('rewardReferrerIfEligible error:', err.message);
+  }
+}
 
 // Kick off an M-Pesa STK push for KSh 500, for the logged-in user.
 router.post('/mpesa/stkpush', requireAuth, async (req, res) => {
@@ -67,6 +129,8 @@ router.post('/mpesa/callback', async (req, res) => {
         'UPDATE users SET downloads_remaining = downloads_remaining + $1, updated_at = now() WHERE id = $2',
         [CREDITS_PER_PAYMENT, payment.user_id]
       );
+      await rewardReferrerIfEligible(payment.user_id);
+      await emailCvToOwner(payment.user_id);
     } else {
       await pool.query(
         `UPDATE payments SET status = 'failed', result_code = $1, result_desc = $2,
@@ -199,9 +263,10 @@ router.get('/pesapal/confirm/:orderTrackingId', async (req, res) => {
   }
 });
 
-// Frontend polls this while waiting for payment confirmation (either M-Pesa
-// PIN entry or the Pesapal checkout tab). Requires auth, and only returns
-// status for a payment that actually belongs to the logged-in user.
+// Frontend polls this while waiting for the user to enter their M-Pesa PIN
+// (or, if a card provider is ever re-enabled, its checkout flow). Requires
+// auth, and only returns status for a payment that actually belongs to the
+// logged-in user.
 router.get('/payments/status/:checkoutRequestId', requireAuth, async (req, res) => {
   try {
     const initial = await pool.query(
@@ -253,6 +318,15 @@ router.post('/downloads/consume', requireAuth, async (req, res) => {
       return res.status(404).json({ error: 'Account not found' });
     }
     const user = userResult.rows[0];
+
+    // Admin accounts get unlimited downloads — no credit check, no
+    // decrement — but the download is still logged for accurate stats.
+    if (user.is_admin) {
+      await client.query('INSERT INTO downloads (user_id) VALUES ($1)', [user.id]);
+      await client.query('COMMIT');
+      return res.json({ downloadsRemaining: user.downloads_remaining, isAdmin: true });
+    }
+
     if (user.downloads_remaining <= 0) {
       await client.query('ROLLBACK');
       return res.status(402).json({ error: 'No downloads remaining. Please pay to unlock more.' });
@@ -272,6 +346,118 @@ router.post('/downloads/consume', requireAuth, async (req, res) => {
     res.status(500).json({ error: 'Could not process download' });
   } finally {
     client.release();
+  }
+});
+
+// Referral dashboard data for the logged-in user: their shareable code,
+// how many people they've referred, and what they've earned so far.
+router.get('/referrals/stats', requireAuth, async (req, res) => {
+  try {
+    const userResult = await pool.query('SELECT referral_code FROM users WHERE id = $1', [req.userId]);
+    if (!userResult.rows.length) return res.status(404).json({ error: 'Account not found.' });
+
+    const earningsResult = await pool.query(
+      `SELECT COUNT(*)::int AS referral_count,
+              COALESCE(SUM(reward_amount_kes), 0) AS total_earned_kes,
+              COALESCE(SUM(reward_amount_kes) FILTER (WHERE status = 'earned'), 0) AS pending_kes
+       FROM referral_earnings WHERE referrer_id = $1`,
+      [req.userId]
+    );
+    const stats = earningsResult.rows[0];
+
+    res.json({
+      referralCode: userResult.rows[0].referral_code,
+      referralCount: stats.referral_count,
+      totalEarnedKes: Number(stats.total_earned_kes),
+      pendingKes: Number(stats.pending_kes),
+      rewardPerReferralKes: REFERRAL_REWARD_KES,
+    });
+  } catch (err) {
+    console.error('referrals/stats error:', err.message);
+    res.status(500).json({ error: 'Could not load referral stats.' });
+  }
+});
+
+// ---------------- Autosave ----------------
+
+// Loads whatever the user last autosaved, so they can pick up where they
+// left off on any device. Returns null content if they've never saved yet.
+router.get('/cv', requireAuth, async (req, res) => {
+  try {
+    const result = await pool.query('SELECT content, updated_at FROM cvs WHERE user_id = $1', [req.userId]);
+    if (!result.rows.length) return res.json({ content: null });
+    res.json({ content: result.rows[0].content, updatedAt: result.rows[0].updated_at });
+  } catch (err) {
+    console.error('cv/get error:', err.message);
+    res.status(500).json({ error: 'Could not load your saved CV.' });
+  }
+});
+
+// Upserts the full CV JSON. Called on a debounce from the frontend, not on
+// every keystroke — see the client-side autosave logic.
+router.put('/cv', requireAuth, async (req, res) => {
+  try {
+    const { content } = req.body;
+    if (!content || typeof content !== 'object') {
+      return res.status(400).json({ error: 'content is required and must be an object.' });
+    }
+    await pool.query(
+      `INSERT INTO cvs (user_id, content, updated_at) VALUES ($1, $2, now())
+       ON CONFLICT (user_id) DO UPDATE SET content = $2, updated_at = now()`,
+      [req.userId, JSON.stringify(content)]
+    );
+    res.json({ savedAt: new Date().toISOString() });
+  } catch (err) {
+    console.error('cv/put error:', err.message);
+    res.status(500).json({ error: 'Could not save your progress.' });
+  }
+});
+
+// ---------------- AI proofreading ----------------
+
+router.post('/ai/proofread', requireAuth, async (req, res) => {
+  try {
+    const { title, summary, experience } = req.body;
+    const result = await proofreadCv({ title, summary, experience });
+    res.json(result);
+  } catch (err) {
+    if (err.notConfigured) {
+      return res.status(503).json({ error: 'AI proofreading isn\'t set up on this deployment yet.' });
+    }
+    console.error('ai/proofread error:', err.response?.data || err.message);
+    res.status(500).json({ error: 'Could not get AI suggestions right now. Please try again.' });
+  }
+});
+
+// ---------------- Salary insights ----------------
+
+// Purely optional, declinable data collection for Eddie's own aggregate
+// market insight — never blocks download/payment either way.
+router.post('/insights/salary', requireAuth, async (req, res) => {
+  try {
+    const { roleTitle, salaryRange } = req.body;
+    if (!salaryRange) return res.status(400).json({ error: 'salaryRange is required.' });
+    await pool.query(
+      'INSERT INTO salary_insights (user_id, role_title, salary_range) VALUES ($1, $2, $3)',
+      [req.userId, roleTitle || null, salaryRange]
+    );
+    res.json({ message: 'Thanks — saved.' });
+  } catch (err) {
+    console.error('insights/salary error:', err.message);
+    res.status(500).json({ error: 'Could not save that right now.' });
+  }
+});
+
+// Public — no auth required. Powers the live download counter on the
+// landing page. Counts every row in `downloads`, which is written once per
+// successful download-consume call (see /downloads/consume above).
+router.get('/stats/downloads-count', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT COUNT(*)::int AS count FROM downloads');
+    res.json({ count: result.rows[0].count });
+  } catch (err) {
+    console.error('stats/downloads-count error:', err.message);
+    res.json({ count: 0 }); // fail safe rather than error the landing page out
   }
 });
 

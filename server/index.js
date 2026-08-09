@@ -6,6 +6,9 @@ const apiRoutes = require('./routes/api');
 const authRoutes = require('./routes/auth');
 
 const app = express();
+// Render sits behind a reverse proxy — without this, req.ip would return
+// Render's internal proxy address instead of the visitor's real IP.
+app.set('trust proxy', true);
 app.use(cors());
 app.use(express.json());
 

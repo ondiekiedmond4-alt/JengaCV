@@ -205,6 +205,143 @@ This emails everyone who's currently opted in. Run it locally (pointed at
 your production `DATABASE_URL` and `RESEND_API_KEY` in your `.env`) or
 directly on Render via the Shell tab under your web service.
 
+## Update: referral program + new background patterns
+
+**Referral program.** Every account gets a unique 6-character referral
+code and shareable link (`yoursite.com/?ref=CODE`). When someone signs up
+via that link and makes their **first** successful payment, the referrer
+earns:
+- A logged cash reward (default **KSh 75**, i.e. 15% of the KSh 500 price
+  — see the reasoning below) in the new `referral_earnings` table
+- An instant bonus of 1 free download credit, immediately
+
+**Payouts are manual, on purpose.** Automatically sending real M-Pesa cash
+to referrers requires Safaricom's **B2C API** — a separate product from
+the C2B/STK Push this app already uses, needing its own application and
+approval. Rather than promise automation that isn't actually built, run:
+```
+npm run referrals
+```
+This lists everyone owed money and their contact info. Pay each person
+manually via M-Pesa, then run `npm run referrals -- mark <userId>` to
+record it as paid. Worth automating via B2C later once volume justifies
+the extra integration work.
+
+**Adjusting the reward:** it's one constant, `REFERRAL_REWARD_PERCENT`, at
+the top of `server/routes/api.js`.
+
+**If you're updating an existing deployment:** re-run `server/schema.sql`
+— it adds `referral_code`, `referred_by`, and `referral_rewarded` columns
+to `users`, plus the new `referral_earnings` table. No new environment
+variables needed.
+
+**New background patterns:** Circuit, Hex mesh, Wave, and Triangles join
+the existing Dots/Lines/Grid/Corner options — same low-opacity,
+accent-tinted approach so they stay decorative without hurting
+readability, built with pure CSS gradients (no image assets).
+
+## Update: CV emailing, verification, AI proofreading, autosave, and more
+
+A large batch of related features. Covering each briefly:
+
+**Email CVs to the account holder.** After a successful M-Pesa payment, a
+copy of the person's autosaved CV is emailed to their account address.
+**Honest limitation:** this is a clean, readable HTML email of the CV
+*content* — not a pixel-perfect match of the exact template/font/pattern
+they chose. True PDF-attachment emailing needs server-side PDF rendering
+(e.g. Puppeteer), which isn't set up in this deployment. Worth adding later
+if it matters enough to invest in that infrastructure.
+
+**Email verification.** A verification email now sends at registration
+(24-hour link). Unverified accounts see a dismissible banner in the app
+with a "Resend link" option — verification is prompted, not enforced;
+nothing is blocked if someone ignores it.
+
+**AI CV proofreading.** "Improve with AI" in the Work Experience step
+sends the summary + experience content to Claude via the Anthropic API,
+which suggests grammar/clarity fixes and rewrites vague achievements into
+measurable ones (e.g. "Achieved the campaign's trading profit target at
+20% MoM"). **Important:** the system prompt explicitly forbids the model
+from inventing specific numbers that weren't provided — where a bullet
+lacks a real metric, it suggests the *structure* with a placeholder like
+"[add %, KSh amount, or time saved]" instead of guessing a statistic.
+Needs `ANTHROPIC_API_KEY` set — get one at console.anthropic.com.
+
+**Downloads per payment: 3 → 2.** `CREDITS_PER_PAYMENT` in
+`server/routes/api.js`, updated everywhere in the UI and copy.
+
+**Salary insights.** Right when someone clicks Download (once per
+session), a declinable prompt asks their target monthly income for the
+role — pure aggregate market data for Eddie, never blocking the download.
+
+**Post-edit referral prompt.** Immediately after (or if skipped), a second
+declinable prompt offers sharing the referral link via WhatsApp. The
+always-available "Refer & Earn" button in the top bar still exists
+separately for anytime access.
+
+**Fonts.** Four pairings (Classic, Modern, Elegant, Minimal) selectable per
+CV, applied to the name and body text; the small uppercase section-label
+style stays in IBM Plex Mono regardless, since that's a structural design
+choice rather than "the CV's font."
+
+**Certifications moved** to the optional Additional Sections step, and now
+have Started / Completed / Expires date fields instead of one generic date.
+
+**Mini icons on skill/tool/hobby pills.** Best-effort keyword matching
+(`PILL_ICON_KEYWORDS` in `public/index.html`) — covers common categories
+(coding, data, design, finance, sports, music, etc.) with a star fallback
+for anything unmatched. No dictionary can cover every possible skill or
+hobby someone types, so this is deliberately a heuristic, not exhaustive.
+Hidden on the Classic/ATS template for the same reason icons are hidden
+elsewhere there.
+
+**Autosave.** Debounced (2s after the last edit) save to a new `cvs` table,
+keyed to the account. Loads automatically on login, so editing can resume
+on any device, any time.
+
+**If you're updating an existing deployment:**
+1. Add `ANTHROPIC_API_KEY` in Render's Environment tab
+2. Re-run `server/schema.sql` — adds `email_verified`, the
+   `email_verifications`, `cvs`, and `salary_insights` tables, and the new
+   certification date fields (those live in the `cvs.content` JSON, not a
+   separate column, so no migration needed there specifically)
+3. No changes needed to `RESEND_API_KEY`/`EMAIL_FROM` — verification and
+   CV-copy emails reuse the same Resend setup as password reset
+
+## Update: admin account (unlimited downloads)
+
+There's now an `is_admin` flag on `users`, checked in the download-consume
+route: admin accounts skip the credit check entirely — no decrementing,
+no payment gate — while every download they make is still logged (so the
+site-wide download counter stays accurate).
+
+**Not self-serve, on purpose.** There's no UI to grant yourself admin —
+that would be a security hole. To make your own account admin, run this
+once in pgAdmin's Query Tool:
+```sql
+UPDATE users SET is_admin = true WHERE email = 'your-account-email@example.com';
+```
+Log out and back in afterward so the app picks up the change — you'll see
+"Unlimited downloads (admin)" in place of the normal credit count, and the
+Download button skips straight past the payment modal every time.
+
+**If you're updating an existing deployment:** re-run `server/schema.sql`
+— it adds the `is_admin` column. No new environment variables.
+
+## Update: back to M-Pesa only
+
+Card payments (Flutterwave) and location-based currency conversion have
+both been removed — `server/flutterwave.js`, `server/currency.js`, the
+`/api/flutterwave/*` routes, `/api/currency`, and the Card tab in the
+payment modal are all gone. The app now offers M-Pesa exclusively, the same
+as the very first deployment.
+
+The `payments` table still has `currency` and `charged_amount` columns from
+that experiment — they're harmless and unused now, left in place rather
+than doing a riskier column-drop migration. `server/pesapal.js` and its
+routes are also still present and untouched from earlier, in case card
+payments come back via Pesapal instead down the line.
+
 ## Notes on what's stubbed vs. real
 
 - **M-Pesa**: fully wired — real STK Push, real webhook, real credit

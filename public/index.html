@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>JengaCV — Build your CV</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
     --ink:#1c2333;
@@ -20,6 +20,8 @@
     --muted:#6b6f7a;
     --accent:#1f6f5c;
     --radius:10px;
+    --cv-font-display:'Fraunces',serif;
+    --cv-font-body:'Inter',sans-serif;
   }
   *{box-sizing:border-box;}
   body{margin:0;font-family:'Inter',sans-serif;background:var(--paper);color:var(--ink);}
@@ -32,10 +34,20 @@
   .brand h1{font-size:20px;color:#fff;letter-spacing:.01em;}
   .brand .tag{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--gold);letter-spacing:.08em;}
   .credits-pill{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);padding:7px 14px;border-radius:999px;font-size:13px;}
+  .verify-banner{grid-column:1/-1;background:#fdf3e3;border-bottom:1px solid #e8c98a;color:#7a5a12;padding:10px 24px;display:flex;align-items:center;gap:14px;font-size:13px;}
+  .verify-banner button{border:none;background:none;font-weight:700;cursor:pointer;color:inherit;text-decoration:underline;padding:0;font-size:13px;}
+  .verify-banner .dismiss-verify{margin-left:auto;text-decoration:none;font-size:14px;opacity:.6;}
+  .verify-banner .dismiss-verify:hover{opacity:1;}
   .credits-pill .dot{width:7px;height:7px;border-radius:50%;background:var(--gold);}
   .user-pill{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);padding:6px 8px 6px 14px;border-radius:999px;font-size:13px;color:#fff;}
   .user-pill #logoutBtn{background:none;border:none;color:rgba(255,255,255,.7);font-size:15px;cursor:pointer;padding:4px 6px;border-radius:6px;}
   .user-pill #logoutBtn:hover{background:rgba(255,255,255,.12);color:#fff;}
+  .refer-btn{background:var(--gold);color:var(--ink);border:none;border-radius:999px;padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer;}
+  .refer-btn:hover{background:#b48a2f;}
+  .referral-stats{margin-top:20px;}
+  .referral-stat-row{display:flex;justify-content:space-between;gap:10px;background:var(--paper-alt);border-radius:9px;padding:14px;text-align:center;}
+  .referral-stat-num{font-family:'Fraunces',serif;font-weight:700;font-size:19px;color:var(--green);}
+  .referral-stat-label{font-size:11px;color:var(--muted);margin-top:2px;}
 
   /* ---------- Auth gate ---------- */
   .auth-gate{position:fixed;inset:0;background:var(--paper);display:flex;align-items:center;justify-content:center;z-index:40;padding:20px;}
@@ -61,6 +73,35 @@
   .pattern-swatch[data-p="lines"]{background-image:repeating-linear-gradient(45deg, var(--accent) 0 1.5px, transparent 1.5px 7px);}
   .pattern-swatch[data-p="grid"]{background-image:linear-gradient(var(--accent) 1px, transparent 1px), linear-gradient(90deg, var(--accent) 1px, transparent 1px);background-size:9px 9px;}
   .pattern-swatch[data-p="corner"]{background-image:radial-gradient(circle at top left, var(--accent) 0%, transparent 60%), radial-gradient(circle at bottom right, var(--accent) 0%, transparent 60%);}
+  .pattern-swatch[data-p="circuit"]{background-image:linear-gradient(var(--accent) 1px, transparent 1px), linear-gradient(90deg, var(--accent) 1px, transparent 1px), radial-gradient(var(--accent) 1.4px, transparent 1.4px);background-size:10px 10px,10px 10px,10px 10px;background-position:0 0,0 0,5px 5px;}
+  .pattern-swatch[data-p="hex"]{background-image:radial-gradient(circle, var(--accent) 1.4px, transparent 1.4px), radial-gradient(circle, var(--accent) 1.4px, transparent 1.4px);background-size:9px 9px,9px 9px;background-position:0 0,4.5px 4.5px;}
+  .pattern-swatch[data-p="wave"]{background-image:repeating-linear-gradient(120deg, var(--accent) 0 1.2px, transparent 1.2px 6px);}
+  .pattern-swatch[data-p="triangles"]{background-image:conic-gradient(from 45deg, var(--accent) 0 25%, transparent 0 50%, var(--accent) 0 75%, transparent 0);background-size:9px 9px;}
+  .reorder-trigger{display:flex;align-items:center;gap:6px;margin-left:auto;background:none;border:1.5px solid var(--line);border-radius:7px;padding:7px 12px;font-size:12.5px;font-weight:600;color:var(--ink);cursor:pointer;}
+  .reorder-trigger:hover{border-color:var(--accent);color:var(--accent);}
+  .reorder-trigger svg{width:14px;height:14px;}
+  .font-options{display:flex;gap:6px;flex-wrap:wrap;}
+  .font-option{background:#fff;border:1.5px solid var(--line);border-radius:7px;padding:6px 12px;font-size:12.5px;font-weight:600;cursor:pointer;color:var(--ink);}
+  .font-option.active{border-color:var(--accent);background:var(--paper-alt);color:var(--accent);}
+  .reorder-list{margin-top:6px;max-height:340px;overflow-y:auto;}
+  .reorder-row{display:flex;align-items:center;justify-content:space-between;padding:10px 4px;border-bottom:1px solid var(--line);}
+  .reorder-row:last-child{border-bottom:none;}
+  .reorder-label{font-size:13.5px;font-weight:600;}
+  .reorder-arrows{display:flex;gap:4px;}
+  .reorder-arrows button{background:var(--paper-alt);border:1px solid var(--line);border-radius:6px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--ink);}
+  .reorder-arrows button:hover:not(:disabled){border-color:var(--accent);color:var(--accent);}
+  .reorder-arrows button:disabled{opacity:.3;cursor:default;}
+  .reorder-arrows button svg{width:14px;height:14px;}
+  .ai-suggestions{max-height:400px;overflow-y:auto;margin-top:10px;}
+  .ai-suggestion-card{background:var(--paper-alt);border-radius:10px;padding:14px;margin-bottom:12px;}
+  .ai-suggestion-section{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;}
+  .ai-original{font-size:12.5px;color:var(--muted);text-decoration:line-through;}
+  .ai-arrow{text-align:center;color:var(--accent);font-size:13px;margin:2px 0;}
+  .ai-suggested{font-size:13px;font-weight:600;color:var(--ink);}
+  .ai-reason{font-size:11.5px;color:var(--muted);margin-top:6px;font-style:italic;}
+  .salary-options{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px;}
+  .salary-option{background:var(--paper-alt);border:1.5px solid var(--line);border-radius:8px;padding:10px 8px;font-size:12.5px;font-weight:600;cursor:pointer;color:var(--ink);}
+  .salary-option:hover{border-color:var(--accent);color:var(--accent);background:#fff;}
 
   .layout{display:grid;grid-template-columns:minmax(340px,440px) 1fr;gap:0;min-height:calc(100vh - 60px);}
   @media (max-width:900px){.layout{grid-template-columns:1fr;}}
@@ -110,11 +151,16 @@
   textarea{resize:vertical;min-height:70px;}
   input:focus,textarea:focus,select:focus{outline:none;border-color:var(--accent);}
   .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
 
   .entry-card{background:var(--paper-alt);border:1px solid var(--line);border-radius:var(--radius);padding:16px;margin-bottom:14px;position:relative;}
   .entry-card .remove-btn{position:absolute;top:10px;right:10px;background:none;border:none;color:var(--danger);font-size:12px;font-weight:600;cursor:pointer;font-family:'IBM Plex Mono',monospace;}
   .add-btn{display:inline-flex;align-items:center;gap:6px;background:none;border:1.5px dashed var(--muted);color:var(--ink);border-radius:8px;padding:9px 14px;font-size:13px;font-weight:600;cursor:pointer;width:100%;justify-content:center;}
   .add-btn:hover{border-color:var(--accent);color:var(--accent);}
+  .ai-btn{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;margin-top:12px;background:var(--ink);color:#fff;border:none;border-radius:8px;padding:11px;font-size:13.5px;font-weight:700;cursor:pointer;}
+  .ai-btn:hover{background:#000;}
+  .ai-btn svg{width:15px;height:15px;color:var(--gold);}
+  .ai-btn:disabled{opacity:.6;cursor:default;}
   .substep-label{font-weight:700;font-size:14px;margin:0 0 12px;color:var(--ink);display:flex;align-items:center;gap:8px;}
   .substep-label svg{width:16px;height:16px;color:var(--accent);flex-shrink:0;}
 
@@ -145,13 +191,40 @@
   .paper-pattern.pat-lines{background-image:repeating-linear-gradient(45deg, var(--accent) 0 2px, transparent 2px 14px);opacity:.06;}
   .paper-pattern.pat-grid{background-image:linear-gradient(var(--accent) 1px, transparent 1px), linear-gradient(90deg, var(--accent) 1px, transparent 1px);background-size:26px 26px;opacity:.055;}
   .paper-pattern.pat-corner{background-image:radial-gradient(circle at top left, var(--accent) 0%, transparent 32%), radial-gradient(circle at bottom right, var(--accent) 0%, transparent 32%);opacity:.10;background-repeat:no-repeat;}
+  .paper-pattern.pat-circuit{
+    background-image:
+      linear-gradient(var(--accent) 1px, transparent 1px),
+      linear-gradient(90deg, var(--accent) 1px, transparent 1px),
+      radial-gradient(var(--accent) 1.6px, transparent 1.6px);
+    background-size: 32px 32px, 32px 32px, 32px 32px;
+    background-position: 0 0, 0 0, 16px 16px;
+    opacity:.075;
+  }
+  .paper-pattern.pat-hex{
+    background-image:
+      radial-gradient(circle, var(--accent) 1.6px, transparent 1.6px),
+      radial-gradient(circle, var(--accent) 1.6px, transparent 1.6px);
+    background-size: 26px 26px, 26px 26px;
+    background-position: 0 0, 13px 13px;
+    opacity:.09;
+  }
+  .paper-pattern.pat-wave{
+    background-image: repeating-linear-gradient(120deg, var(--accent) 0 1.5px, transparent 1.5px 20px, var(--accent) 20px 21.5px, transparent 21.5px 42px);
+    opacity:.055;
+  }
+  .paper-pattern.pat-triangles{
+    background-image: conic-gradient(from 45deg, var(--accent) 0 25%, transparent 0 50%, var(--accent) 0 75%, transparent 0);
+    background-size: 26px 26px;
+    opacity:.06;
+  }
 
   .download-row{display:flex;justify-content:center;margin-top:22px;}
   .download-btn{display:flex;align-items:center;gap:8px;background:var(--accent);color:#fff;padding:13px 26px;border-radius:9px;border:none;font-size:14.5px;font-weight:700;cursor:pointer;}
   .download-btn:hover{background:var(--green-dark);}
 
   /* ---------- Resume templates ---------- */
-  .r-name{font-family:'Fraunces',serif;font-weight:700;line-height:1.05;}
+  #resumePreview{position:relative;z-index:1;font-family:var(--cv-font-body);}
+  .r-name{font-family:var(--cv-font-display);font-weight:700;line-height:1.05;}
   .r-title{color:var(--accent);font-weight:600;}
   .r-section-title{font-family:'IBM Plex Mono',monospace;letter-spacing:.1em;text-transform:uppercase;font-size:11.5px;color:var(--accent);margin:22px 0 10px;display:flex;align-items:center;gap:6px;}
   .r-section-title svg{width:13px;height:13px;flex-shrink:0;}
@@ -162,7 +235,9 @@
   .r-item ul{margin:4px 0 0;padding-left:18px;font-size:13px;line-height:1.55;}
   .r-contact{font-size:12px;color:var(--muted);margin-top:6px;}
   .r-skills{display:flex;flex-wrap:wrap;gap:7px;}
-  .r-skill-pill{font-size:11.5px;background:var(--paper-alt);padding:4px 10px;border-radius:5px;}
+  .r-skill-pill{font-size:11.5px;background:var(--paper-alt);padding:4px 10px;border-radius:5px;display:inline-flex;align-items:center;gap:5px;}
+  .r-skill-pill svg{width:11px;height:11px;flex-shrink:0;color:var(--accent);}
+  .tpl-classic .r-skill-pill svg{display:none;}
 
   /* Modern template */
   .tpl-modern .r-header{border-bottom:3px solid var(--accent);padding-bottom:14px;margin-bottom:6px;}
@@ -171,7 +246,7 @@
 
   /* Classic / ATS template */
   .tpl-classic{font-family:'Inter',sans-serif;}
-  .tpl-classic .r-name{font-family:'Inter',sans-serif;font-size:24px;font-weight:700;color:#000;}
+  .tpl-classic .r-name{font-family:var(--cv-font-body);font-size:24px;font-weight:700;color:#000;}
   .tpl-classic .r-title{color:#000;font-weight:500;}
   .tpl-classic .r-section-title{font-family:'Inter',sans-serif;color:#000;border-bottom:1.5px solid #000;padding-bottom:4px;letter-spacing:.03em;}
   .tpl-classic .r-header{border-bottom:1.5px solid #000;padding-bottom:12px;}
@@ -218,7 +293,8 @@
     <span class="tag">BUILD · PREVIEW · DOWNLOAD</span>
   </div>
   <div style="display:flex;align-items:center;gap:12px;">
-    <div class="credits-pill" id="creditsPill" style="display:none;"><span class="dot"></span><span id="creditsText">0 of 3 downloads remaining</span></div>
+    <div class="credits-pill" id="creditsPill" style="display:none;"><span class="dot"></span><span id="creditsText">0 of 2 downloads remaining</span></div>
+    <button id="referBtn" class="refer-btn" style="display:none;">Refer & Earn</button>
     <div class="user-pill" id="userPill" style="display:none;">
       <span id="userNameText"></span>
       <button id="logoutBtn" title="Log out">⏻</button>
@@ -244,6 +320,11 @@
 </div>
 
 <div class="layout" id="mainLayout" style="display:none;">
+  <div class="verify-banner" id="verifyBanner" style="display:none;">
+    <span>Please verify your email to make sure you don't lose access to your account.</span>
+    <button id="resendVerifyBtn">Resend link</button>
+    <button id="dismissVerifyBtn" class="dismiss-verify" title="Dismiss">✕</button>
+  </div>
   <!-- FORM COLUMN -->
   <div class="form-col">
     <div class="stepper" id="stepper"></div>
@@ -263,6 +344,11 @@
     <div class="control-row">
       <span class="control-label">Background</span>
       <div class="pattern-swatches" id="patternSwatches"></div>
+      <button class="reorder-trigger" id="reorderTrigger">Reorder sections</button>
+    </div>
+    <div class="control-row">
+      <span class="control-label">Font</span>
+      <div class="font-options" id="fontOptions"></div>
     </div>
     <div class="paper-wrap">
       <div class="paper" id="printArea">
@@ -296,6 +382,22 @@ const ICONS = {
   folder: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h6l2 3h8a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1Z"/></svg>`,
   heart: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 1 0-7.8 7.8l1 1L12 21l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.8Z"/></svg>`,
   users: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="7" r="3"/><path d="M2 21v-1a5 5 0 0 1 5-5h4a5 5 0 0 1 5 5v1"/><circle cx="17" cy="7" r="2.2"/><path d="M17.5 13a4 4 0 0 1 4 4v1h-2"/></svg>`,
+  wrench: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.4-3.4a6 6 0 0 1-8 8L6.4 20.6a2 2 0 0 1-2.8-2.8L11.3 11a6 6 0 0 1 8-8l-3.4 3.4z"/></svg>`,
+  arrowUp: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><path d="m5 12 7-7 7 7"/></svg>`,
+  arrowDown: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></svg>`,
+  layers: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 2 9 5-9 5-9-5 9-5Z"/><path d="m3 12 9 5 9-5"/><path d="m3 17 9 5 9-5"/></svg>`,
+  code: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 18 6-6-6-6"/><path d="m8 6-6 6 6 6"/></svg>`,
+  chart: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>`,
+  palette: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r=".5"/><circle cx="17.5" cy="10.5" r=".5"/><circle cx="8.5" cy="7.5" r=".5"/><circle cx="6.5" cy="12.5" r=".5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg>`,
+  currency: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9 8h4a2 2 0 0 1 0 4H9a2 2 0 0 0 0 4h5"/><path d="M12 6v2"/><path d="M12 16v2"/></svg>`,
+  chat: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>`,
+  sports: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>`,
+  book: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"/></svg>`,
+  music: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>`,
+  plane: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-1 .1-1.3.5l-.7.8c-.4.5-.2 1.2.3 1.5L9 12l-2 3H3l-1 1 3 2 2 3 1-1v-4l3-2 3.6 6.1c.3.5 1 .7 1.5.3l.8-.7c.4-.3.6-.8.5-1.3z"/></svg>`,
+  gamepad: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" x2="10" y1="12" y2="12"/><line x1="8" x2="8" y1="10" y2="14"/><line x1="15" x2="15.01" y1="13" y2="13"/><line x1="18" x2="18.01" y1="11" y2="11"/><rect x="2" y="6" width="20" height="12" rx="2"/></svg>`,
+  chef: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21a1 1 0 0 0 1-1v-5.35c0-.457.316-.844.727-1.041a4 4 0 0 0-2.134-7.589 5 5 0 0 0-9.186 0 4 4 0 0 0-2.134 7.588c.411.198.727.585.727 1.041V20a1 1 0 0 0 1 1Z"/><path d="M6 17h12"/></svg>`,
+  star: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`,
 };
 const STEP_ICONS = ['user','fileText','briefcase','cap','award','plus'];
 
@@ -305,11 +407,13 @@ const state = {
   template: 'modern',
   accent: '#1f6f5c',
   pattern: 'none',
+  font: 'classic',
   personal: { name:'', title:'', email:'', phone:'', location:'', linkedin:'', photo:null },
   summary: '',
   experience: [ mkExperience() ],
   education: [ mkEducation() ],
   skills: '',
+  tools: '',
   certifications: [ mkCert() ],
   projects: [ mkProject() ],
   volunteer: [ mkVolunteer() ],
@@ -317,21 +421,33 @@ const state = {
   referencesMode: 'list',
   referencesNote: 'References available upon request.',
   references: [ mkReference() ],
+  // Governs the order sections render in on the CV — the header
+  // (name/contact) always stays fixed at top and isn't part of this list.
+  sectionOrder: ['summary','experience','education','skills','tools','certifications','projects','volunteer','hobbies','references'],
   downloadsRemaining: 0
 };
 
 function mkExperience(){ return { title:'', company:'', location:'', start:'', end:'', achievements:'' }; }
 function mkEducation(){ return { degree:'', institution:'', location:'', start:'', end:'', grade:'' }; }
-function mkCert(){ return { name:'', issuer:'', date:'' }; }
+function mkCert(){ return { name:'', issuer:'', startDate:'', completionDate:'', expiryDate:'' }; }
 function mkProject(){ return { name:'', description:'', link:'' }; }
 function mkVolunteer(){ return { role:'', organization:'', start:'', end:'', description:'' }; }
 function mkReference(){ return { name:'', title:'', phone:'', email:'' }; }
 
-const STEPS = ['Personal Details','Professional Summary','Work Experience','Education','Skills & Certifications','Additional Sections'];
+const STEPS = ['Personal Details','Professional Summary','Work Experience','Education','Skills','Additional Sections'];
 const TEMPLATES = [ {id:'modern',label:'Modern'}, {id:'classic',label:'Classic (ATS)'}, {id:'minimal',label:'Minimalist'} ];
 const ACCENTS = ['#1f6f5c','#1c2333','#a4383a','#2a5599','#c89b3c'];
-const PATTERNS = [ {id:'none',label:'Plain'}, {id:'dots',label:'Dots'}, {id:'lines',label:'Diagonal lines'}, {id:'grid',label:'Grid'}, {id:'corner',label:'Corner glow'} ];
-
+const PATTERNS = [
+  {id:'none',label:'Plain'}, {id:'dots',label:'Dots'}, {id:'lines',label:'Diagonal lines'},
+  {id:'grid',label:'Grid'}, {id:'corner',label:'Corner glow'},
+  {id:'circuit',label:'Circuit'}, {id:'hex',label:'Hex mesh'}, {id:'wave',label:'Wave'}, {id:'triangles',label:'Triangles'}
+];
+const FONTS = [
+  {id:'classic', label:'Classic', display:"'Fraunces',serif", body:"'Inter',sans-serif"},
+  {id:'modern', label:'Modern', display:"'Poppins',sans-serif", body:"'Inter',sans-serif"},
+  {id:'elegant', label:'Elegant', display:"'Playfair Display',serif", body:"'Source Sans 3',sans-serif"},
+  {id:'minimal', label:'Minimal', display:"'IBM Plex Sans',sans-serif", body:"'IBM Plex Sans',sans-serif"},
+];
 
 /* ---------------- HELPERS ---------------- */
 function setPath(obj, path, value){
@@ -347,6 +463,31 @@ function setPath(obj, path, value){
   cur[last] = value;
 }
 function esc(s){ return (s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+// Best-effort keyword matching for pill icons — not exhaustive, since no
+// dictionary can cover every possible skill or hobby someone might type.
+// Falls back to a generic star icon when nothing matches.
+const PILL_ICON_KEYWORDS = [
+  { icon:'code', words:['python','javascript','java','html','css','sql','coding','programming','software','developer','react','node','aws','cloud','it support','system','database','api'] },
+  { icon:'chart', words:['excel','data','analytics','analysis','powerbi','power bi','tableau','statistics','reporting','forecasting'] },
+  { icon:'palette', words:['design','photoshop','illustrator','figma','canva','ui','ux','graphic','branding','art'] },
+  { icon:'currency', words:['accounting','finance','budget','audit','tax','reconciliation','banking','invest','payroll'] },
+  { icon:'chat', words:['communication','writing','speaking','presentation','negotiation','customer service','sales','copywriting'] },
+  { icon:'users', words:['management','leadership','team','supervision','mentoring','coaching','recruitment','hr'] },
+  { icon:'sports', words:['football','soccer','basketball','running','gym','fitness','swimming','rugby','athletics','volleyball'] },
+  { icon:'book', words:['reading','books','literature','blogging'] },
+  { icon:'music', words:['music','singing','guitar','piano','dj','choir'] },
+  { icon:'plane', words:['travel','traveling','travelling'] },
+  { icon:'gamepad', words:['gaming','games','chess','esports'] },
+  { icon:'chef', words:['cooking','baking','food','cuisine'] },
+];
+function pillIcon(text){
+  const lower = (text || '').toLowerCase();
+  for(const group of PILL_ICON_KEYWORDS){
+    if(group.words.some(w => lower.includes(w))) return ICONS[group.icon];
+  }
+  return ICONS.star;
+}
 
 /* ---------------- RENDER: STEPPER ---------------- */
 function renderStepper(){
@@ -414,7 +555,8 @@ function renderStep(){
         <div class="field"><label>Location</label><input type="text" data-field="experience.${i}.location" value="${esc(exp.location)}" placeholder="Nairobi, Kenya"></div>
         <div class="field"><label>Key achievements <span class="hint">one per line</span></label>
           <textarea data-field="experience.${i}.achievements" rows="4" placeholder="Improved CSAT by 12% over two quarters">${esc(exp.achievements)}</textarea></div>
-      </div>`).join('') + `<button class="add-btn" id="addExperience">+ Add another role</button>`;
+      </div>`).join('') + `<button class="add-btn" id="addExperience">+ Add another role</button>
+      <button class="ai-btn" id="aiProofreadBtn">${ICONS.star} Improve with AI</button>`;
   }
 
   else if(state.step === 3){
@@ -434,8 +576,13 @@ function renderStep(){
   else if(state.step === 4){
     body = `
       <div class="field"><label>Skills <span class="hint">comma-separated</span></label>
-        <textarea data-field="skills" rows="3" placeholder="Workforce management, KPI reporting, Stakeholder presentations, Excel">${esc(state.skills)}</textarea></div>
-      <div style="margin-top:8px;">
+        <textarea data-field="skills" rows="3" placeholder="Workforce management, KPI reporting, Stakeholder presentations, Excel">${esc(state.skills)}</textarea></div>`;
+  }
+
+  else if(state.step === 5){
+    const showReferenceList = state.referencesMode === 'list';
+    body = `
+      <div class="substep-label">${ICONS.award}Certifications <span class="hint">optional</span></div>
       ${state.certifications.map((c,i)=>`
         <div class="entry-card">
           ${state.certifications.length>1?`<button class="remove-btn" data-remove="certifications.${i}">REMOVE</button>`:''}
@@ -443,16 +590,15 @@ function renderStep(){
             <div class="field"><label>Certification</label><input type="text" data-field="certifications.${i}.name" value="${esc(c.name)}" placeholder="IBM Data Analytics Professional Cert"></div>
             <div class="field"><label>Issuer</label><input type="text" data-field="certifications.${i}.issuer" value="${esc(c.issuer)}" placeholder="Coursera / IBM"></div>
           </div>
-          <div class="field"><label>Date</label><input type="text" data-field="certifications.${i}.date" value="${esc(c.date)}" placeholder="2026"></div>
+          <div class="row3">
+            <div class="field"><label>Started</label><input type="text" data-field="certifications.${i}.startDate" value="${esc(c.startDate)}" placeholder="Jan 2026"></div>
+            <div class="field"><label>Completed</label><input type="text" data-field="certifications.${i}.completionDate" value="${esc(c.completionDate)}" placeholder="Mar 2026"></div>
+            <div class="field"><label>Expires <span class="hint">if any</span></label><input type="text" data-field="certifications.${i}.expiryDate" value="${esc(c.expiryDate)}" placeholder="Mar 2028"></div>
+          </div>
         </div>`).join('')}
       <button class="add-btn" id="addCert">+ Add another certification</button>
-      </div>`;
-  }
 
-  else if(state.step === 5){
-    const showReferenceList = state.referencesMode === 'list';
-    body = `
-      <div class="substep-label">${ICONS.folder}Projects <span class="hint">optional</span></div>
+      <div class="substep-label" style="margin-top:26px;">${ICONS.folder}Projects <span class="hint">optional</span></div>
       ${state.projects.map((p,i)=>`
         <div class="entry-card">
           ${state.projects.length>1?`<button class="remove-btn" data-remove="projects.${i}">REMOVE</button>`:''}
@@ -480,6 +626,9 @@ function renderStep(){
 
       <div class="substep-label" style="margin-top:26px;">${ICONS.heart}Hobbies & Interests <span class="hint">optional, comma-separated</span></div>
       <div class="field"><textarea data-field="hobbies" rows="2" placeholder="Football, chess, reading personal finance blogs">${esc(state.hobbies)}</textarea></div>
+
+      <div class="substep-label" style="margin-top:26px;">${ICONS.wrench}Tools & Technologies <span class="hint">optional, comma-separated</span></div>
+      <div class="field"><textarea data-field="tools" rows="2" placeholder="Excel, Power BI, Salesforce, Zendesk">${esc(state.tools)}</textarea></div>
 
       <div class="substep-label" style="margin-top:26px;">${ICONS.users}References <span class="hint">optional</span></div>
       <label class="checkbox-row" style="margin:0 0 14px;">
@@ -520,6 +669,8 @@ function renderStep(){
   });
   const addExp = document.getElementById('addExperience');
   if(addExp) addExp.addEventListener('click', ()=>{ state.experience.push(mkExperience()); renderStep(); });
+  const aiBtn = document.getElementById('aiProofreadBtn');
+  if(aiBtn) aiBtn.addEventListener('click', runAiProofread);
   const addEdu = document.getElementById('addEducation');
   if(addEdu) addEdu.addEventListener('click', ()=>{ state.education.push(mkEducation()); renderStep(); });
   const addCert = document.getElementById('addCert');
@@ -566,11 +717,22 @@ function renderControls(){
   const pat = document.getElementById('patternSwatches');
   pat.innerHTML = PATTERNS.map(p=>`<div class="pattern-swatch ${state.pattern===p.id?'active':''}" data-p="${p.id}" title="${p.label}"></div>`).join('');
   pat.querySelectorAll('.pattern-swatch').forEach(s=>s.addEventListener('click', ()=>{ state.pattern=s.dataset.p; renderControls(); renderPreview(); }));
+
+  const reorderBtn = document.getElementById('reorderTrigger');
+  reorderBtn.innerHTML = `${ICONS.layers} Reorder sections`;
+  reorderBtn.onclick = openReorderModal;
+
+  const fontBox = document.getElementById('fontOptions');
+  fontBox.innerHTML = FONTS.map(f=>`<button class="font-option ${state.font===f.id?'active':''}" data-f="${f.id}" style="font-family:${f.display};">${f.label}</button>`).join('');
+  fontBox.querySelectorAll('.font-option').forEach(b=>b.addEventListener('click', ()=>{ state.font=b.dataset.f; renderControls(); renderPreview(); }));
 }
 
 /* ---------------- RENDER: PREVIEW ---------------- */
 function renderPreview(){
   document.documentElement.style.setProperty('--accent', state.accent);
+  const fontPair = FONTS.find(f=>f.id===state.font) || FONTS[0];
+  document.documentElement.style.setProperty('--cv-font-display', fontPair.display);
+  document.documentElement.style.setProperty('--cv-font-body', fontPair.body);
   const p = state.personal;
   const skillsArr = state.skills.split(',').map(s=>s.trim()).filter(Boolean);
 
@@ -587,11 +749,14 @@ function renderPreview(){
       <div class="r-item-sub">${esc(e.institution)}${e.grade?' · '+esc(e.grade):''}</div>
     </div>`).join('');
 
-  const certHtml = state.certifications.filter(c=>c.name).map(c=>`
+  const certHtml = state.certifications.filter(c=>c.name).map(c=>{
+    const dateRange = [c.startDate, c.completionDate].filter(Boolean).join(' – ');
+    return `
     <div class="r-item">
-      <div class="r-item-head"><span>${esc(c.name)}</span><span>${esc(c.date)}</span></div>
-      <div class="r-item-sub">${esc(c.issuer)}</div>
-    </div>`).join('');
+      <div class="r-item-head"><span>${esc(c.name)}</span><span>${esc(dateRange)}</span></div>
+      <div class="r-item-sub">${esc(c.issuer)}${c.expiryDate ? ` · Expires ${esc(c.expiryDate)}` : ''}</div>
+    </div>`;
+  }).join('');
 
   const projHtml = state.projects.filter(pr=>pr.name).map(pr=>`
     <div class="r-item">
@@ -606,6 +771,7 @@ function renderPreview(){
     </div>`).join('');
 
   const hobbiesArr = state.hobbies.split(',').map(s=>s.trim()).filter(Boolean);
+  const toolsArr = state.tools.split(',').map(s=>s.trim()).filter(Boolean);
 
   const refHtml = state.referencesMode === 'note'
     ? (state.referencesNote.trim() ? `<div style="font-size:13px;">${esc(state.referencesNote)}</div>` : '')
@@ -623,6 +789,34 @@ function renderPreview(){
   const contactBits = contactParts.join('  ·  ');
   const avatarHtml = p.photo ? `<img src="${p.photo}" class="r-avatar" alt="">` : '';
 
+  // Registry of every reorderable section — rendered in whatever order
+  // state.sectionOrder specifies. Sections with no content simply produce
+  // an empty string and are skipped, same as before.
+  const sectionsRegistry = {
+    summary: { title:'Summary', icon:ICONS.fileText, html: state.summary ? `<div style="font-size:13px;line-height:1.6">${esc(state.summary)}</div>` : '' },
+    experience: { title:'Experience', icon:ICONS.briefcase, html: expHtml },
+    education: { title:'Education', icon:ICONS.cap, html: eduHtml },
+    skills: { title:'Skills', icon:ICONS.award, html: skillsArr.length ? `<div class="r-skills">${skillsArr.map(s=>`<span class="r-skill-pill">${pillIcon(s)}${esc(s)}</span>`).join('')}</div>` : '' },
+    tools: { title:'Tools & Technologies', icon:ICONS.wrench, html: toolsArr.length ? `<div class="r-skills">${toolsArr.map(t=>`<span class="r-skill-pill">${pillIcon(t)}${esc(t)}</span>`).join('')}</div>` : '' },
+    certifications: { title:'Certifications', icon:ICONS.award, html: certHtml },
+    projects: { title:'Projects', icon:ICONS.folder, html: projHtml },
+    volunteer: { title:'Volunteer Work', icon:ICONS.award, html: volHtml },
+    hobbies: { title:'Hobbies & Interests', icon:ICONS.heart, html: hobbiesArr.length ? `<div class="r-skills">${hobbiesArr.map(h=>`<span class="r-skill-pill">${pillIcon(h)}${esc(h)}</span>`).join('')}</div>` : '' },
+    references: { title:'References', icon:ICONS.users, html: refHtml },
+  };
+
+  // Guard against any section key not present in the order array (e.g. if
+  // a new section type gets added later) by appending it at the end.
+  Object.keys(sectionsRegistry).forEach(key=>{
+    if(!state.sectionOrder.includes(key)) state.sectionOrder.push(key);
+  });
+
+  const sectionsHtml = state.sectionOrder.map(key=>{
+    const sec = sectionsRegistry[key];
+    if(!sec || !sec.html) return '';
+    return `<div class="r-section-title">${sec.icon}${sec.title}</div>${sec.html}`;
+  }).join('');
+
   document.getElementById('resumePreview').innerHTML = `
     <div class="r-header">
       <div class="r-header-flex">
@@ -634,25 +828,47 @@ function renderPreview(){
         </div>
       </div>
     </div>
-    ${state.summary ? `<div class="r-section-title">${ICONS.fileText}Summary</div><div style="font-size:13px;line-height:1.6">${esc(state.summary)}</div>` : ''}
-    ${expHtml ? `<div class="r-section-title">${ICONS.briefcase}Experience</div>${expHtml}` : ''}
-    ${eduHtml ? `<div class="r-section-title">${ICONS.cap}Education</div>${eduHtml}` : ''}
-    ${skillsArr.length ? `<div class="r-section-title">${ICONS.award}Skills</div><div class="r-skills">${skillsArr.map(s=>`<span class="r-skill-pill">${esc(s)}</span>`).join('')}</div>` : ''}
-    ${certHtml ? `<div class="r-section-title">${ICONS.award}Certifications</div>${certHtml}` : ''}
-    ${projHtml ? `<div class="r-section-title">${ICONS.folder}Projects</div>${projHtml}` : ''}
-    ${volHtml ? `<div class="r-section-title">${ICONS.award}Volunteer Work</div>${volHtml}` : ''}
-    ${hobbiesArr.length ? `<div class="r-section-title">${ICONS.heart}Hobbies & Interests</div><div class="r-skills">${hobbiesArr.map(h=>`<span class="r-skill-pill">${esc(h)}</span>`).join('')}</div>` : ''}
-    ${refHtml ? `<div class="r-section-title">${ICONS.users}References</div>${refHtml}` : ''}
+    ${sectionsHtml}
   `;
 
   document.getElementById('printArea').className = 'paper tpl-' + state.template;
   document.getElementById('paperPattern').className = 'paper-pattern pat-' + state.pattern;
+  scheduleAutosave();
 }
 
 /* ---------------- CREDITS ---------------- */
 function renderCredits(){
-  document.getElementById('creditsText').textContent = `${state.downloadsRemaining} of 3 downloads remaining`;
+  if(currentUser?.isAdmin){
+    document.getElementById('creditsText').textContent = `Unlimited downloads (admin)`;
+  } else {
+    document.getElementById('creditsText').textContent = `${state.downloadsRemaining} of 2 downloads remaining`;
+  }
 }
+
+let verifyBannerDismissed = false;
+function renderVerifyBanner(){
+  const banner = document.getElementById('verifyBanner');
+  const shouldShow = currentUser && !currentUser.emailVerified && !verifyBannerDismissed;
+  banner.style.display = shouldShow ? 'flex' : 'none';
+}
+document.getElementById('dismissVerifyBtn').addEventListener('click', ()=>{
+  verifyBannerDismissed = true;
+  renderVerifyBanner();
+});
+document.getElementById('resendVerifyBtn').addEventListener('click', async (e)=>{
+  const btn = e.target;
+  const original = btn.textContent;
+  btn.textContent = 'Sending…';
+  btn.disabled = true;
+  try{
+    const res = await fetch('/api/auth/resend-verification', { method:'POST', headers: authHeaders() });
+    const data = await res.json();
+    btn.textContent = res.ok ? 'Sent ✓' : original;
+  } catch(err){
+    btn.textContent = original;
+  }
+  btn.disabled = false;
+});
 
 /* ---------------- NAV ---------------- */
 document.getElementById('prevBtn').addEventListener('click', ()=>{
@@ -690,13 +906,56 @@ async function checkAuth(){
 
 function onAuthenticated(data){
   state.downloadsRemaining = data.downloadsRemaining || 0;
-  currentUser = { name: data.name, email: data.email, marketingOptIn: !!data.marketingOptIn };
+  currentUser = { name: data.name, email: data.email, marketingOptIn: !!data.marketingOptIn, referralCode: data.referralCode, emailVerified: !!data.emailVerified, isAdmin: !!data.isAdmin };
   document.getElementById('authGate').style.display = 'none';
   document.getElementById('mainLayout').style.display = '';
   document.getElementById('creditsPill').style.display = '';
   document.getElementById('userPill').style.display = 'flex';
+  document.getElementById('referBtn').style.display = '';
   document.getElementById('userNameText').textContent = data.name;
   renderCredits();
+  renderVerifyBanner();
+  loadSavedCv();
+}
+
+async function loadSavedCv(){
+  try{
+    const res = await fetch('/api/cv', { headers: authHeaders() });
+    const data = await res.json();
+    if(!res.ok || !data.content) return; // nothing saved yet — fine, start blank
+    Object.assign(state, data.content);
+    renderStepper();
+    renderStep();
+    renderControls();
+    renderPreview();
+  } catch(err){
+    // if this fails, the person just starts with a blank builder — not fatal
+  }
+}
+
+let autosaveTimer = null;
+function scheduleAutosave(){
+  if(!getToken()) return; // not logged in yet (shouldn't happen since builder is gated, but safe)
+  clearTimeout(autosaveTimer);
+  autosaveTimer = setTimeout(doAutosave, 2000);
+}
+async function doAutosave(){
+  const content = {
+    template: state.template, accent: state.accent, pattern: state.pattern, font: state.font,
+    personal: state.personal, summary: state.summary, experience: state.experience,
+    education: state.education, skills: state.skills, tools: state.tools,
+    certifications: state.certifications, projects: state.projects, volunteer: state.volunteer,
+    hobbies: state.hobbies, referencesMode: state.referencesMode, referencesNote: state.referencesNote,
+    references: state.references, sectionOrder: state.sectionOrder,
+  };
+  try{
+    await fetch('/api/cv', {
+      method:'PUT', headers: authHeaders({'Content-Type':'application/json'}),
+      body: JSON.stringify({ content })
+    });
+  } catch(err){
+    // silent — autosave failing shouldn't interrupt editing, it'll just retry on the next change
+  }
 }
 
 function showAuthGate(){
@@ -704,6 +963,7 @@ function showAuthGate(){
   document.getElementById('mainLayout').style.display = 'none';
   document.getElementById('creditsPill').style.display = 'none';
   document.getElementById('userPill').style.display = 'none';
+  document.getElementById('referBtn').style.display = 'none';
   authMode = 'login';
   document.querySelectorAll('#authTabs button').forEach(x=>x.classList.toggle('active', x.dataset.a==='login'));
   document.getElementById('authTabs').style.display = 'flex';
@@ -795,7 +1055,9 @@ document.getElementById('authSubmit').addEventListener('click', async (e)=>{
 
   try{
     const endpoint = authMode === 'register' ? '/api/auth/register' : '/api/auth/login';
-    const payload = authMode === 'register' ? { name, email, password, marketingOptIn } : { email, password };
+    let referredCode = null;
+    try{ referredCode = localStorage.getItem('jengacv_ref'); }catch(e){}
+    const payload = authMode === 'register' ? { name, email, password, marketingOptIn, referralCode: referredCode } : { email, password };
     const res = await fetch(endpoint, {
       method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)
     });
@@ -864,19 +1126,283 @@ function openAccountModal(){
   });
 }
 
+document.getElementById('referBtn').addEventListener('click', openReferralModal);
+
+function openReferralModal(){
+  const root = document.getElementById('modalRoot');
+  const referralLink = `${window.location.origin}/?ref=${currentUser?.referralCode || ''}`;
+
+  root.innerHTML = `
+    <div class="modal-overlay">
+      <div class="modal">
+        <button class="modal-close" id="closeReferral">✕</button>
+        <h3>Refer & Earn</h3>
+        <div class="modal-sub">Share your link. When someone you referred makes their first payment, you earn KSh <span id="referralRewardAmt">75</span> plus a free download credit.</div>
+        <div class="field" style="margin-top:16px;">
+          <label>Your referral link</label>
+          <div style="display:flex;gap:8px;">
+            <input type="text" id="referralLinkInput" value="${referralLink}" readonly style="flex:1;">
+            <button class="btn btn-ghost" id="copyReferralLink" style="white-space:nowrap;">Copy</button>
+          </div>
+        </div>
+        <div class="modal-actions" style="margin-top:6px;">
+          <a class="btn btn-accent" id="shareWhatsapp" style="width:100%;text-decoration:none;" target="_blank" rel="noopener">Share on WhatsApp</a>
+        </div>
+        <div class="referral-stats" id="referralStats">
+          <div class="demo-note">Loading your referral stats…</div>
+        </div>
+      </div>
+    </div>`;
+
+  document.getElementById('closeReferral').addEventListener('click', ()=>{ root.innerHTML=''; });
+  document.getElementById('copyReferralLink').addEventListener('click', async ()=>{
+    try{
+      await navigator.clipboard.writeText(referralLink);
+      const btn = document.getElementById('copyReferralLink');
+      const original = btn.textContent;
+      btn.textContent = 'Copied!';
+      setTimeout(()=>{ btn.textContent = original; }, 1500);
+    } catch(e){
+      document.getElementById('referralLinkInput').select();
+    }
+  });
+
+  const whatsappText = encodeURIComponent(`I used JengaCV to build my CV — try it here and it's free to build and preview: ${referralLink}`);
+  document.getElementById('shareWhatsapp').href = `https://wa.me/?text=${whatsappText}`;
+
+  loadReferralStats();
+}
+
+async function loadReferralStats(){
+  try{
+    const res = await fetch('/api/referrals/stats', { headers: authHeaders() });
+    const data = await res.json();
+    if(!res.ok) return;
+    const rewardEl = document.getElementById('referralRewardAmt');
+    if(rewardEl) rewardEl.textContent = data.rewardPerReferralKes;
+    const statsBox = document.getElementById('referralStats');
+    if(statsBox){
+      statsBox.innerHTML = `
+        <div class="referral-stat-row">
+          <div><div class="referral-stat-num">${data.referralCount}</div><div class="referral-stat-label">Friends referred</div></div>
+          <div><div class="referral-stat-num">KSh ${data.totalEarnedKes}</div><div class="referral-stat-label">Total earned</div></div>
+          <div><div class="referral-stat-num">KSh ${data.pendingKes}</div><div class="referral-stat-label">Pending payout</div></div>
+        </div>`;
+    }
+  } catch(err){
+    // stats are a nice-to-have here — sharing the link still works even if this fails
+  }
+}
+
 document.getElementById('logoutBtn').addEventListener('click', ()=>{
   clearToken();
   showAuthGate();
 });
 
+const SECTION_LABELS = {
+  summary:'Summary', experience:'Experience', education:'Education', skills:'Skills',
+  tools:'Tools & Technologies', certifications:'Certifications', projects:'Projects',
+  volunteer:'Volunteer Work', hobbies:'Hobbies & Interests', references:'References',
+};
+
+async function runAiProofread(){
+  const btn = document.getElementById('aiProofreadBtn');
+  const originalText = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = `<span class="spinner"></span> Reading your CV…`;
+
+  try{
+    const res = await fetch('/api/ai/proofread', {
+      method:'POST', headers: authHeaders({'Content-Type':'application/json'}),
+      body: JSON.stringify({ title: state.personal.title, summary: state.summary, experience: state.experience })
+    });
+    const data = await res.json();
+    btn.disabled = false; btn.innerHTML = originalText;
+    if(!res.ok){
+      alert(data.error || 'Could not get AI suggestions right now.');
+      return;
+    }
+    showAiSuggestions(data);
+  } catch(err){
+    btn.disabled = false; btn.innerHTML = originalText;
+    alert('Network error — please try again.');
+  }
+}
+
+function showAiSuggestions(data){
+  const root = document.getElementById('modalRoot');
+  const suggestions = data.suggestions || [];
+
+  if(!suggestions.length){
+    root.innerHTML = `
+      <div class="modal-overlay">
+        <div class="modal">
+          <button class="modal-close" id="closeAi">✕</button>
+          <h3>Looking good</h3>
+          <div class="modal-sub">${data.overallNotes || "No suggestions right now — your summary and achievements already read well."}</div>
+          <div class="modal-actions"><button class="btn btn-accent" id="closeAi2" style="width:100%;">Close</button></div>
+        </div>
+      </div>`;
+    document.getElementById('closeAi').addEventListener('click', ()=>{ root.innerHTML=''; });
+    document.getElementById('closeAi2').addEventListener('click', ()=>{ root.innerHTML=''; });
+    return;
+  }
+
+  root.innerHTML = `
+    <div class="modal-overlay">
+      <div class="modal" style="max-width:480px;">
+        <button class="modal-close" id="closeAi">✕</button>
+        <h3>AI suggestions</h3>
+        <div class="modal-sub">${data.overallNotes || 'Here are a few ways to make your CV stronger.'}</div>
+        <div class="ai-suggestions">
+          ${suggestions.map((s,i)=>`
+            <div class="ai-suggestion-card">
+              <div class="ai-suggestion-section">${s.section === 'summary' ? 'Summary' : `Experience #${(s.index ?? 0) + 1}`}</div>
+              <div class="ai-original">${esc(s.original || '')}</div>
+              <div class="ai-arrow">↓</div>
+              <div class="ai-suggested">${esc(s.suggestion || '')}</div>
+              <div class="ai-reason">${esc(s.reason || '')}</div>
+              <button class="btn btn-accent ai-apply-btn" data-i="${i}" style="width:100%;margin-top:8px;">Apply this change</button>
+            </div>`).join('')}
+        </div>
+        <div class="modal-actions"><button class="btn btn-ghost" id="closeAi2" style="width:100%;">Close</button></div>
+      </div>
+    </div>`;
+
+  document.getElementById('closeAi').addEventListener('click', ()=>{ root.innerHTML=''; });
+  document.getElementById('closeAi2').addEventListener('click', ()=>{ root.innerHTML=''; });
+  root.querySelectorAll('.ai-apply-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const s = suggestions[Number(btn.dataset.i)];
+      if(s.section === 'summary'){
+        state.summary = s.suggestion;
+      } else if(s.section === 'experience' && state.experience[s.index]){
+        // The achievements field holds multiple lines; the suggestion
+        // replaces the specific achievements text that was sent for review.
+        state.experience[s.index].achievements = s.suggestion;
+      }
+      btn.textContent = 'Applied ✓';
+      btn.disabled = true;
+      renderStep();
+      renderPreview();
+    });
+  });
+}
+  const root = document.getElementById('modalRoot');
+
+  function render(){
+    root.innerHTML = `
+      <div class="modal-overlay">
+        <div class="modal">
+          <button class="modal-close" id="closeReorder">✕</button>
+          <h3>Reorder sections</h3>
+          <div class="modal-sub">Your name and contact details always stay at the top. Rearrange everything else below — empty sections just won't show up on the CV regardless of position.</div>
+          <div class="reorder-list">
+            ${state.sectionOrder.map((key,i)=>`
+              <div class="reorder-row">
+                <span class="reorder-label">${SECTION_LABELS[key] || key}</span>
+                <div class="reorder-arrows">
+                  <button data-move="up" data-i="${i}" ${i===0?'disabled':''} title="Move up">${ICONS.arrowUp}</button>
+                  <button data-move="down" data-i="${i}" ${i===state.sectionOrder.length-1?'disabled':''} title="Move down">${ICONS.arrowDown}</button>
+                </div>
+              </div>`).join('')}
+          </div>
+          <div class="modal-actions">
+            <button class="btn btn-accent" id="doneReorder" style="width:100%;">Done</button>
+          </div>
+        </div>
+      </div>`;
+
+    document.getElementById('closeReorder').addEventListener('click', close);
+    document.getElementById('doneReorder').addEventListener('click', close);
+    root.querySelectorAll('[data-move]').forEach(btn=>{
+      btn.addEventListener('click', e=>{
+        const i = Number(e.currentTarget.dataset.i);
+        const j = e.currentTarget.dataset.move === 'up' ? i - 1 : i + 1;
+        [state.sectionOrder[i], state.sectionOrder[j]] = [state.sectionOrder[j], state.sectionOrder[i]];
+        render();
+        renderPreview();
+      });
+    });
+  }
+
+  function close(){ root.innerHTML=''; }
+  render();
+}
+
 /* ---------------- DOWNLOAD + PAYMENT ---------------- */
-document.getElementById('downloadBtn').addEventListener('click', ()=>{
-  if(state.downloadsRemaining > 0){
+let postEditFlowShown = false;
+function proceedToDownloadFlow(){
+  if(currentUser?.isAdmin || state.downloadsRemaining > 0){
     doDownload();
   } else {
     openPaymentModal();
   }
+}
+
+document.getElementById('downloadBtn').addEventListener('click', ()=>{
+  if(!postEditFlowShown){
+    postEditFlowShown = true;
+    openInsightsModal();
+  } else {
+    proceedToDownloadFlow();
+  }
 });
+
+function openInsightsModal(){
+  const root = document.getElementById('modalRoot');
+  const ranges = ['Below KSh 30,000','KSh 30,000–50,000','KSh 50,000–80,000','KSh 80,000–120,000','KSh 120,000–200,000','Above KSh 200,000'];
+  root.innerHTML = `
+    <div class="modal-overlay">
+      <div class="modal">
+        <button class="modal-close" id="closeInsights">✕</button>
+        <h3>Quick question before you download</h3>
+        <div class="modal-sub">What's your target monthly income for the role you're applying to? Purely optional — this helps us understand the Kenyan job market, and doesn't affect your CV.</div>
+        <div class="salary-options">
+          ${ranges.map(r=>`<button class="salary-option" data-r="${r}">${r}</button>`).join('')}
+        </div>
+        <div class="modal-actions" style="margin-top:14px;">
+          <button class="btn btn-ghost" id="skipInsights" style="width:100%;">No thanks, skip this</button>
+        </div>
+      </div>
+    </div>`;
+
+  const next = ()=>{ root.innerHTML=''; openReferralPrompt(); };
+  document.getElementById('closeInsights').addEventListener('click', next);
+  document.getElementById('skipInsights').addEventListener('click', next);
+  root.querySelectorAll('.salary-option').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      try{
+        await fetch('/api/insights/salary', {
+          method:'POST', headers: authHeaders({'Content-Type':'application/json'}),
+          body: JSON.stringify({ roleTitle: state.personal.title, salaryRange: btn.dataset.r })
+        });
+      } catch(e){ /* non-critical — proceed regardless */ }
+      next();
+    });
+  });
+}
+
+function openReferralPrompt(){
+  const root = document.getElementById('modalRoot');
+  const referralLink = `${window.location.origin}/?ref=${currentUser?.referralCode || ''}`;
+  const whatsappText = encodeURIComponent(`I used JengaCV to build my CV — try it here: ${referralLink}`);
+  root.innerHTML = `
+    <div class="modal-overlay">
+      <div class="modal">
+        <button class="modal-close" id="closeReferPrompt">✕</button>
+        <h3>Know someone job hunting?</h3>
+        <div class="modal-sub">Share your link with a friend. When they pay for their first download, you earn KSh 75 plus a free download credit.</div>
+        <a class="btn btn-accent" href="https://wa.me/?text=${whatsappText}" target="_blank" rel="noopener" style="width:100%;text-decoration:none;display:flex;justify-content:center;margin-top:10px;">Share on WhatsApp</a>
+        <div class="modal-actions">
+          <button class="btn btn-ghost" id="skipReferPrompt" style="width:100%;">Maybe later</button>
+        </div>
+      </div>
+    </div>`;
+  const proceed = ()=>{ root.innerHTML=''; proceedToDownloadFlow(); };
+  document.getElementById('closeReferPrompt').addEventListener('click', proceed);
+  document.getElementById('skipReferPrompt').addEventListener('click', proceed);
+}
 
 // Server is the single source of truth for credits — it decrements and
 // confirms before we ever call window.print().
@@ -906,9 +1432,9 @@ function openPaymentModal(){
     <div class="modal-overlay">
       <div class="modal">
         <button class="modal-close" id="closeModal">✕</button>
-        <h3>Unlock 3 downloads</h3>
-        <div class="modal-sub">Building and previewing your CV is free. Pay once to download 3 PDF copies (including re-downloads after edits).</div>
-        <div class="price-box"><span>JengaCV — 3 downloads</span><span class="amt">KSh 500</span></div>
+        <h3>Unlock 2 downloads</h3>
+        <div class="modal-sub">Building and previewing your CV is free. Pay once to download 2 PDF copies (including re-downloads after edits).</div>
+        <div class="price-box"><span>JengaCV — 2 downloads</span><span class="amt">KSh 500</span></div>
         <div class="field"><label>M-Pesa phone number</label><input type="tel" id="mpesaPhone" placeholder="07XX XXX XXX"></div>
         <div id="payStatus"></div>
         <div class="modal-actions">
@@ -952,7 +1478,7 @@ function openPaymentModal(){
   }
 
   // Note: still keyed generically by reference so this keeps working
-  // unchanged whenever card payments (Pesapal) get re-enabled later.
+  // unchanged whenever a card provider gets re-enabled later.
   async function pollPaymentStatus(reference){
     const maxAttempts = 20; // ~60s at 3s intervals — STK prompts typically resolve well within this
     let attempts = 0;
@@ -987,7 +1513,7 @@ function openPaymentModal(){
       <div class="success-box">
         <div class="check">✓</div>
         <h3>Payment successful</h3>
-        <div class="modal-sub">3 downloads unlocked. Your CV is ready.</div>
+        <div class="modal-sub">2 downloads unlocked. Your CV is ready.</div>
         <button class="btn btn-accent" id="downloadNow" style="width:100%;margin-top:10px;">Download my CV now</button>
       </div>`;
     document.getElementById('closeModal2').addEventListener('click', closeModal);
@@ -1004,6 +1530,13 @@ renderStep();
 renderControls();
 renderPreview();
 renderCredits();
+(function captureReferral(){
+  const ref = new URLSearchParams(window.location.search).get('ref');
+  if(ref){
+    try{ localStorage.setItem('jengacv_ref', ref.trim().toUpperCase()); }catch(e){}
+  }
+})();
+
 checkAuth();
 </script>
 

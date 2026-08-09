@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Verify your email — JengaCV</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{ --ink:#1c2333; --paper:#faf8f4; --green:#1f6f5c; --line:#e2ddd0; --danger:#a4383a; --muted:#6b6f7a; }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:'Inter',sans-serif;background:var(--paper);color:var(--ink);display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px;}
+  .card{background:#fff;border-radius:16px;padding:32px;width:100%;max-width:380px;text-align:center;box-shadow:0 10px 30px rgba(28,35,51,.12);}
+  h1{font-family:'Fraunces',serif;font-size:20px;margin:0 0 8px;}
+  p{color:var(--muted);font-size:13.5px;line-height:1.5;margin:0;}
+  .spinner{width:26px;height:26px;border:3px solid var(--line);border-top-color:var(--green);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 14px;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .check{width:46px;height:46px;border-radius:50%;background:var(--green);color:#fff;display:flex;align-items:center;justify-content:center;font-size:22px;margin:0 auto 14px;}
+  .fail{background:var(--danger);}
+  a.back{display:inline-block;margin-top:16px;font-size:13px;color:var(--green);text-decoration:none;}
+</style>
+</head>
+<body>
+  <div class="card" id="box">
+    <div class="spinner"></div>
+    <h1>Verifying your email…</h1>
+    <p>Just a moment.</p>
+  </div>
+
+<script>
+  const token = new URLSearchParams(window.location.search).get('token');
+  const box = document.getElementById('box');
+
+  (async function verify(){
+    if(!token){
+      box.innerHTML = `<h1>Missing verification token</h1><p>This link looks incomplete. Try requesting a new one from inside JengaCV.</p><a class="back" href="/app">Back to JengaCV</a>`;
+      return;
+    }
+    try{
+      const res = await fetch('/api/auth/verify-email', {
+        method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ token })
+      });
+      const data = await res.json();
+      if(res.ok){
+        box.innerHTML = `<div class="check">✓</div><h1>Email verified</h1><p>You're all set. You can close this tab or head back to JengaCV.</p><a class="back" href="/app">Back to JengaCV</a>`;
+      } else {
+        box.innerHTML = `<div class="check fail">✕</div><h1>Could not verify</h1><p>${data.error || 'This link may have expired.'}</p><a class="back" href="/app">Back to JengaCV</a>`;
+      }
+    } catch(err){
+      box.innerHTML = `<h1>Network error</h1><p>Please try again, or head back to JengaCV.</p><a class="back" href="/app">Back to JengaCV</a>`;
+    }
+  })();
+</script>
+</body>
+</html>

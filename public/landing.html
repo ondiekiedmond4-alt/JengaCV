@@ -170,8 +170,9 @@
       </div>
       <p class="hero-note">Free to build and preview. Pay only when you're ready to download.</p>
       <div class="trust-row">
+        <div class="trust-item"><div class="num" id="downloadsCount">—</div><div class="label">CVs downloaded so far</div></div>
         <div class="trust-item"><div class="num">3</div><div class="label">Templates to choose from</div></div>
-        <div class="trust-item"><div class="num">KSh 500</div><div class="label">For 3 downloads</div></div>
+        <div class="trust-item"><div class="num">KSh 500</div><div class="label">For 2 downloads</div></div>
         <div class="trust-item"><div class="num">M-Pesa</div><div class="label">Pay via STK Push</div></div>
       </div>
     </div>
@@ -217,7 +218,7 @@
       <div class="step-card">
         <span class="step-num">03</span>
         <h3>Download and apply</h3>
-        <p>Pay KSh 500 via M-Pesa for 3 downloads — including re-downloads after edits — and get a clean, print-ready PDF.</p>
+        <p>Pay KSh 500 via M-Pesa for 2 downloads — including re-downloads after edits — and get a clean, print-ready PDF.</p>
       </div>
     </div>
   </div>
@@ -341,8 +342,24 @@
       </div>
       <div class="price-right">
         <div class="price-amt">KSh 500</div>
-        <div class="price-sub">for 3 downloads</div>
+        <div class="price-sub">for 2 downloads</div>
         <a href="/app" class="btn btn-accent">Get started</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="wrap">
+    <div class="price-card" style="border-color:var(--gold);">
+      <div class="price-left">
+        <h2>Refer a friend, earn KSh 75</h2>
+        <p>Every JengaCV account comes with its own referral link. When someone you refer makes their first payment, you earn a reward — no cap on how many friends you can refer.</p>
+      </div>
+      <div class="price-right">
+        <div class="price-amt" style="color:var(--gold);">KSh 75</div>
+        <div class="price-sub">per successful referral</div>
+        <a href="/app" class="btn btn-accent">Start referring</a>
       </div>
     </div>
   </div>
@@ -361,6 +378,34 @@
     <div class="footer-note">© 2026 JengaCV. Built for the Kenyan job market.</div>
   </div>
 </div>
+
+<script>
+  // Captures a shared referral code (e.g. jengacv.onrender.com/?ref=AB12CD)
+  // so it's remembered through to registration, even if the visitor
+  // browses around before signing up.
+  (function captureReferral(){
+    const ref = new URLSearchParams(window.location.search).get('ref');
+    if(ref){
+      try{ localStorage.setItem('jengacv_ref', ref.trim().toUpperCase()); }catch(e){}
+    }
+  })();
+
+  // Live count of total CVs downloaded, site-wide. Fetches on load and
+  // polls every 10s so the number updates for anyone with the page open
+  // when a download happens elsewhere — no page refresh needed.
+  async function loadDownloadsCount(){
+    try{
+      const res = await fetch('/api/stats/downloads-count');
+      const data = await res.json();
+      const el = document.getElementById('downloadsCount');
+      if(el && typeof data.count === 'number') el.textContent = data.count.toLocaleString();
+    } catch(err){
+      // leave the placeholder — not critical if this fails
+    }
+  }
+  loadDownloadsCount();
+  setInterval(loadDownloadsCount, 10000);
+</script>
 
 </body>
 </html>
