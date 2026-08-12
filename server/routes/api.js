@@ -5,6 +5,8 @@ const pesapal = require('../pesapal');
 const { requireAuth } = require('../auth');
 const { proofreadCv } = require('../ai');
 const { sendEmail, buildResumeEmailHtml } = require('../email');
+const { buildResumeHtml } = require('../resume-template');
+const { htmlToPdf } = require('../pdf-service');
 
 const router = express.Router();
 const DOWNLOAD_PRICE = 500;
@@ -296,6 +298,33 @@ router.get('/payments/status/:checkoutRequestId', requireAuth, async (req, res) 
 
 // Consumes one download credit for the logged-in user. Called right before
 // the frontend triggers window.print().
+// Generates the actual downloadable PDF file from the CV content the
+// client currently has on screen (not the possibly-slightly-stale
+// autosaved copy), via a real browser-rendering API. Returns a proper
+// file response — not a print dialog — so it works reliably on mobile too.
+router.post('/generate-pdf', requireAuth, async (req, res) => {
+  try {
+    const { content } = req.body;
+    if (!content || typeof content !== 'object') {
+      return res.status(400).json({ error: 'content is required and must be an object.' });
+    }
+
+    const html = buildResumeHtml(content);
+    const pdfBuffer = await htmlToPdf(html);
+
+    const fileName = (content.personal?.name || 'CV').replace(/[^a-z0-9]/gi, '_');
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}-JengaCV.pdf"`);
+    res.send(pdfBuffer);
+  } catch (err) {
+    if (err.notConfigured) {
+      return res.status(503).json({ error: 'PDF generation isn\'t set up on this deployment yet.' });
+    }
+    console.error('generate-pdf error:', err.response?.data || err.message);
+    res.status(500).json({ error: 'Could not generate your PDF. Please try again.' });
+  }
+});
+
 router.post('/downloads/consume', requireAuth, async (req, res) => {
   const client = await pool.connect();
   try {

@@ -205,6 +205,51 @@ This emails everyone who's currently opted in. Run it locally (pointed at
 your production `DATABASE_URL` and `RESEND_API_KEY` in your `.env`) or
 directly on Render via the Shell tab under your web service.
 
+## Update: real server-side PDF downloads (fixes mobile downloads + quality)
+
+Previously, "Download PDF" used the browser's own print-to-PDF
+(`window.print()`). This caused two real problems: mobile browsers often
+don't surface the resulting file in Downloads at all (since it's a print
+dialog, not a file download), and print-to-PDF frequently rasterizes the
+page, making it look like a low-quality scan instead of sharp text.
+
+**The fix:** PDFs are now generated server-side and sent as an actual file:
+
+1. `server/resume-template.js` — a Node port of the client's CV rendering
+   logic (`public/index.html`'s `renderPreview()`), producing a standalone
+   HTML document from the CV's JSON content. Kept deliberately close in
+   structure to the client version so the PDF matches the on-screen preview.
+2. `server/pdf-service.js` — sends that HTML to **CustomJS**
+   (customjs.space), a hosted API that renders it with a real Chromium
+   browser and returns a proper PDF. 600 free conversions/month.
+3. The `/api/generate-pdf` route returns the PDF with
+   `Content-Disposition: attachment`, which is what makes browsers — mobile
+   included — treat it as a genuine downloadable file rather than opening a
+   print preview.
+4. The frontend now fetches that PDF as a blob and triggers the download
+   via a temporary `<a download>` element — the standard, reliable pattern
+   for real file downloads from JavaScript, working the same way on
+   desktop and mobile.
+
+**Why CustomJS instead of self-hosting Puppeteer:** Puppeteer needs to
+launch a real Chromium binary on the server, and Render specifically has
+well-documented issues with this ("Could not find Chrome" errors from a
+misconfigured cache path), often requiring a custom build script to fix.
+Given the deployment friction already hit in this project, a hosted API
+with a simple key — the same pattern already working for Resend and
+Anthropic — is the lower-risk choice.
+
+**If you're updating an existing deployment:**
+1. Sign up at customjs.space, grab an API key
+2. Add `CUSTOMJS_API_KEY` in Render's Environment tab
+3. No schema changes, no other setup — this is frontend + backend code only
+
+**Note on quality:** since CustomJS uses real Chromium rendering server-side
+(and Render's servers have normal internet access, unlike some restricted
+environments), Google Fonts, background patterns, and icons should all
+render at full fidelity — a genuine improvement over the old print-to-PDF
+approach in every respect, not just the download reliability.
+
 ## Update: referral program simplified to credit-only
 
 The referral program no longer tracks or pays out real KSh — it's purely a

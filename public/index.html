@@ -1404,8 +1404,10 @@ function openReferralPrompt(){
 }
 
 // Server is the single source of truth for credits — it decrements and
-// confirms before we ever call window.print().
+// confirms before triggering the actual PDF download.
 async function doDownload(){
+  const btn = document.getElementById('downloadBtn');
+  const originalBtnText = btn.innerHTML;
   try{
     const res = await fetch('/api/downloads/consume', {
       method:'POST', headers: authHeaders({'Content-Type':'application/json'})
@@ -1419,9 +1421,48 @@ async function doDownload(){
     }
     state.downloadsRemaining = data.downloadsRemaining;
     renderCredits();
-    window.print();
+
+    btn.disabled = true;
+    btn.innerHTML = `<span class="spinner"></span> Preparing your PDF…`;
+
+    // Server-rendered PDF, sent as a real file — this is what makes the
+    // download reliably show up (including on mobile) and stay sharp
+    // instead of looking like a scanned print-out.
+    const cvContent = {
+      template: state.template, accent: state.accent, pattern: state.pattern, font: state.font,
+      personal: state.personal, summary: state.summary, experience: state.experience,
+      education: state.education, skills: state.skills, tools: state.tools,
+      certifications: state.certifications, projects: state.projects, volunteer: state.volunteer,
+      hobbies: state.hobbies, referencesMode: state.referencesMode, referencesNote: state.referencesNote,
+      references: state.references, sectionOrder: state.sectionOrder,
+    };
+
+    const pdfRes = await fetch('/api/generate-pdf', {
+      method:'POST', headers: authHeaders({'Content-Type':'application/json'}),
+      body: JSON.stringify({ content: cvContent })
+    });
+
+    if(!pdfRes.ok){
+      const errData = await pdfRes.json().catch(()=>({}));
+      alert(errData.error || 'Could not generate your PDF. Your download credit was still used — please try again or contact support.');
+      return;
+    }
+
+    const blob = await pdfRes.blob();
+    const url = URL.createObjectURL(blob);
+    const fileName = ((state.personal.name || 'CV').replace(/[^a-z0-9]/gi, '_')) + '-JengaCV.pdf';
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   } catch(err){
     alert('Network error — please check your connection and try again.');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = originalBtnText;
   }
 }
 
