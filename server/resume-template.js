@@ -70,8 +70,8 @@ const SECTION_LABELS = {
 };
 
 const RESUME_CSS = `
-  .paper{width:100%;background:#fff;padding:46px 42px;position:relative;overflow:hidden;font-family:var(--cv-font-body);}
-  .paper-pattern{position:absolute;inset:0;z-index:0;pointer-events:none;background-repeat:repeat;}
+  .paper{width:100%;background:#fff;padding:46px 42px;position:relative;font-family:var(--cv-font-body);}
+  .paper-pattern{position:fixed;inset:0;z-index:0;pointer-events:none;background-repeat:repeat;}
   #resumePreview{position:relative;z-index:1;}
   .paper-pattern.pat-none{display:none;}
   .paper-pattern.pat-dots{background-image:radial-gradient(circle, var(--accent) 1.5px, transparent 1.5px);background-size:18px 18px;opacity:.10;}
@@ -209,7 +209,8 @@ function buildResumeHtml(content) {
 <link href="${fontLink}" rel="stylesheet">
 <style>
   *{box-sizing:border-box;margin:0;padding:0;}
-  body{background:#fff;}
+  @page{ size:A4; margin:0; }
+  html,body{background:#fff;margin:0;padding:0;}
   :root{ --accent:${accent}; --cv-font-display:${fontPair.display}; --cv-font-body:${fontPair.body}; }
   ${RESUME_CSS}
 </style>

@@ -205,6 +205,29 @@ This emails everyone who's currently opted in. Run it locally (pointed at
 your production `DATABASE_URL` and `RESEND_API_KEY` in your `.env`) or
 directly on Render via the Shell tab under your web service.
 
+## Update: fixed uneven margins and inconsistent multi-page backgrounds in PDFs
+
+Real bug found from an actual generated CV: the browser's own default print
+margins were stacking on top of the resume's own padding (causing uneven
+spacing), and the background wasn't rendering consistently when a CV
+spanned more than one page.
+
+**Root causes, both in `server/resume-template.js`:**
+1. No explicit `@page` CSS rule meant Chromium applied its own default
+   print margins in addition to the resume's padding — fixed with
+   `@page{ size:A4; margin:0; }`, so the resume's own CSS is now the only
+   source of spacing.
+2. `overflow:hidden` on the resume's outer container can clip background
+   rendering when content spans multiple PDF pages — removed.
+3. The background pattern layer used `position:absolute`, which doesn't
+   reliably repeat across paginated PDF output. Switched to
+   `position:fixed`, which is the standard, correct CSS technique for
+   making an element repeat identically on every page of a generated PDF
+   (well-supported by Chromium's print engine, which is what CustomJS
+   uses under the hood).
+
+No new environment variables, no schema changes — just the template fix.
+
 ## Update: real server-side PDF downloads (fixes mobile downloads + quality)
 
 Previously, "Download PDF" used the browser's own print-to-PDF
