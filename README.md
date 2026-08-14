@@ -205,6 +205,22 @@ This emails everyone who's currently opted in. Run it locally (pointed at
 your production `DATABASE_URL` and `RESEND_API_KEY` in your `.env`) or
 directly on Render via the Shell tab under your web service.
 
+## Update: margins now apply correctly to every PDF page (1 inch, every side, every page)
+
+Follow-up fix to the margin work below. Padding on the resume's content
+div only creates space at the true start and end of the whole document,
+not at each page break — so a multi-page CV had no top margin on page 2+
+and no bottom margin on page 1, with content running edge-to-edge at every
+page break.
+
+**The fix:** margin is now set via the `@page` CSS rule
+(`@page{ margin:1in; }`) instead of div padding. `@page` margins are part
+of the CSS Paged Media spec and apply uniformly to every generated page,
+regardless of how many pages the content spans — the correct, standard way
+to get consistent 1-inch margins on every page of a PDF. The resume's own
+padding was removed to avoid stacking both, which would have produced a
+2-inch margin instead of 1.
+
 ## Update: fixed uneven margins and inconsistent multi-page backgrounds in PDFs
 
 Real bug found from an actual generated CV: the browser's own default print
