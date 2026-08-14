@@ -70,7 +70,7 @@ const SECTION_LABELS = {
 };
 
 const RESUME_CSS = `
-  .paper{width:100%;background:#fff;padding:46px 42px;position:relative;font-family:var(--cv-font-body);}
+  .paper{width:100%;background:#fff;padding:1in;position:relative;font-family:var(--cv-font-body);}
   .paper-pattern{position:fixed;inset:0;z-index:0;pointer-events:none;background-repeat:repeat;}
   #resumePreview{position:relative;z-index:1;}
   .paper-pattern.pat-none{display:none;}
